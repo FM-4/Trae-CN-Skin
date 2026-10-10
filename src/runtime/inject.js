@@ -1,0 +1,107 @@
+// Self-contained function serialized into the selected TRAE renderer. No Electron privileges.
+export function installTheme(theme, image, contract, revision) {
+  const KEY = '__traeSnowInkV1';
+  const prior = window[KEY];
+  if (prior?.revision === revision && prior.inspect().installed) return prior.inspect();
+  if (!document.querySelector(contract.root)) throw new Error('TRAE 根节点尚未就绪');
+  const old = prior ? { theme: prior.theme, image: prior.image, contract: prior.contract, revision: prior.revision } : null;
+  prior?.dispose();
+  const root = document.documentElement;
+  const style = document.createElement('style'); style.id = 'trae-snow-ink-style';
+  const layer = document.createElement('div'); layer.id = 'trae-snow-ink-background'; layer.setAttribute('aria-hidden','true');
+  const marked = new Map(); let observer; let timer; let disposed = false;
+  const oldMode = root.getAttribute('data-tws-mode');
+  root.setAttribute('data-tws-mode', theme.mode);
+  const surface = `color-mix(in srgb, ${theme.surface} ${theme.surfaceOpacity}%, transparent)`;
+  const overlayOpacity = Math.max(theme.surfaceOpacity, 88);
+  const overlaySurface = `color-mix(in srgb, ${theme.surface} ${overlayOpacity}%, transparent)`;
+  style.textContent = `
+    html[data-tws-mode] {
+      --vscode-foreground:${theme.text}!important; --vscode-descriptionForeground:${theme.muted}!important; --vscode-input-placeholderForeground:${theme.muted}!important; --vscode-focusBorder:${theme.accent}!important; --vscode-button-background:${theme.accent}!important; --vscode-button-foreground:${theme.background}!important; --vscode-input-background:${surface}!important; --vscode-input-foreground:${theme.text}!important;
+      --vscode-widget-background:${overlaySurface}!important; --vscode-widget-border:color-mix(in srgb,${theme.text} 18%,transparent)!important; --vscode-widget-shadow:0 8px 24px #0008!important; --vscode-editorWidget-background:${overlaySurface}!important; --vscode-editorWidget-border:color-mix(in srgb,${theme.text} 18%,transparent)!important; --vscode-dropdown-background:${overlaySurface}!important; --vscode-dropdown-foreground:${theme.text}!important; --vscode-menu-background:${overlaySurface}!important; --vscode-menu-foreground:${theme.text}!important; --vscode-menu-border:color-mix(in srgb,${theme.text} 18%,transparent)!important; --vscode-menu-selectionBackground:color-mix(in srgb,${theme.accent} 26%,${theme.surface})!important; --vscode-menu-selectionForeground:${theme.text}!important; --vscode-menu-separatorBackground:color-mix(in srgb,${theme.text} 14%,transparent)!important; --vscode-quickInput-background:${overlaySurface}!important; --vscode-quickInput-foreground:${theme.text}!important; --vscode-quickInputList-focusBackground:color-mix(in srgb,${theme.accent} 26%,${theme.surface})!important; --vscode-quickInputList-focusForeground:${theme.text}!important; --vscode-inputOption-activeBackground:color-mix(in srgb,${theme.accent} 20%,${theme.surface})!important;
+      --vscode-icube-colorBg1:${overlaySurface}!important; --vscode-icube-colorBg2:${overlaySurface}!important; --vscode-icube-colorBg3:${overlaySurface}!important; --vscode-icube-colorBg5:color-mix(in srgb,${theme.text} 7%,transparent)!important; --vscode-icube-lite-colorBg1:${overlaySurface}!important;
+      --vscode-icube--bg-bg-base-default:${surface}!important; --vscode-icube--bg-bg-base-secondary:${surface}!important; --vscode-icube--bg-bg-base-tertiary:${surface}!important; --vscode-icube--bg-bg-menu:${overlaySurface}!important; --vscode-icube--bg-bg-tooltip:${overlaySurface}!important; --vscode-icube--bg-bg-overlay-l1:color-mix(in srgb,${theme.text} 6%,transparent)!important; --vscode-icube--bg-bg-overlay-l2:color-mix(in srgb,${theme.text} 9%,transparent)!important; --vscode-icube--bg-bg-overlay-l3:color-mix(in srgb,${theme.text} 13%,transparent)!important; --vscode-icube--bg-bg-overlay-l4:color-mix(in srgb,${theme.text} 18%,transparent)!important;
+      --vscode-icube-colorDefaultText:${theme.text}!important; --vscode-icube-colorTextDefault:${theme.text}!important; --vscode-icube--text-text-default:${theme.text}!important; --vscode-icube--text-text-default-hover:${theme.text}!important; --vscode-icube--text-text-default-active:${theme.text}!important; --vscode-icube--text-text-secondary:${theme.muted}!important; --vscode-icube--text-text-secondary-hover:${theme.text}!important; --vscode-icube-colorTextGray:${theme.muted}!important; --vscode-icube-colorGrayText:${theme.muted}!important; --vscode-icube-colorGrayText2:${theme.muted}!important; --vscode-icube-colorTextDisable:color-mix(in srgb,${theme.muted} 62%,transparent)!important; --vscode-icube-colorDisableText:color-mix(in srgb,${theme.muted} 62%,transparent)!important;
+      --vscode-icube--icon-icon-default:${theme.text}!important; --vscode-icube--icon-icon-secondary:${theme.muted}!important; --vscode-icube--icon-icon-tertiary:${theme.muted}!important; --vscode-icube-colorBgLine1:color-mix(in srgb,${theme.text} 12%,transparent)!important; --vscode-icube-colorLine1:color-mix(in srgb,${theme.text} 12%,transparent)!important; --vscode-icube-colorLine2:color-mix(in srgb,${theme.text} 18%,transparent)!important; --vscode-icube-modalLayoutBg:${overlaySurface}!important; --vscode-icube-modalOverlay:rgba(0,0,0,.5)!important;
+      --vscode-icube--bg-bg-brand:${theme.accent}!important; --vscode-icube--bg-bg-brand-hover:color-mix(in srgb,${theme.accent} 86%,${theme.text})!important; --vscode-icube--bg-bg-brand-disabled:color-mix(in srgb,${theme.accent} 24%,transparent)!important; --vscode-icube--bg-bg-invert:${theme.surface}!important; --vscode-icube--bg-bg-invert-hover:color-mix(in srgb,${theme.surface} 84%,${theme.text})!important; --vscode-icube--bg-bg-invert-active:${theme.background}!important; --vscode-icube--bg-bg-invert-disabled:color-mix(in srgb,${theme.muted} 18%,transparent)!important;
+      --vscode-icube--border-border-neutral-l1:color-mix(in srgb,${theme.text} 10%,transparent)!important; --vscode-icube--border-border-neutral-l2:color-mix(in srgb,${theme.text} 16%,transparent)!important; --vscode-icube--border-border-neutral-l3:color-mix(in srgb,${theme.text} 22%,transparent)!important;
+      --vscode-icube--icon-icon-disabled:color-mix(in srgb,${theme.muted} 58%,transparent)!important; --vscode-icube--icon-icon-onaccent:${theme.background}!important; --vscode-icube--icon-icon-secondary-hover:${theme.text}!important; --vscode-icube--text-text-brand:${theme.accent}!important; --vscode-icube--text-text-disabled:color-mix(in srgb,${theme.muted} 58%,transparent)!important; --vscode-icube--text-text-onaccent:${theme.background}!important; --vscode-icube--text-text-tertiary:${theme.muted}!important;
+      --vscode-icube-colorBgTr1:color-mix(in srgb,${theme.text} 7%,transparent)!important; --vscode-icube-colorBgTr2:color-mix(in srgb,${theme.text} 11%,transparent)!important; --vscode-icube-colorBlackText1:${theme.text}!important; --vscode-icube-colorHighlightText:${theme.accent}!important; --vscode-icube-colorTextHighlight:${theme.accent}!important; --vscode-icube-emptyExplorerButtonTextColor:${theme.text}!important; --vscode-icube-agentReviewSummaryBg:${surface}!important; --vscode-icube-qualityBackgroundColor:${surface}!important; --vscode-icube-qualityForeground:${theme.text}!important; --icube-statusBar-background:${surface}!important; --icube-statusBar-color:${theme.text}!important;
+      --vscode-icube-box-shadow1:0 4px 12px #0005!important; --vscode-icube-box-shadow2:0 8px 24px #0007!important; --vscode-icube-box-shadow3:0 14px 38px #0009!important; --vscode-icube-elevation-100-tooltip:0 4px 12px #0006!important; --vscode-icube-elevation-200-menu-panel:0 8px 24px #0008!important; --vscode-icube-elevation-300-modal-panel:0 14px 38px #0009!important;
+    }
+    html[data-tws-mode] body { background:${theme.background}!important; color:${theme.text}!important; isolation:isolate; }
+    #trae-snow-ink-background { position:fixed; inset:0; pointer-events:none; z-index:-1; background-color:${theme.background}; }
+    #trae-snow-ink-background::before { content:''; position:absolute; inset:0 0 0 auto; width:${theme.imageWidth}%; background-image:linear-gradient(to right,${theme.background},transparent 35%),url("${image}"); background-position:center,${theme.focusX}% ${theme.focusY}%; background-size:cover; opacity:${theme.taskIntensity/100}; }
+    #trae-snow-ink-background[data-home]::before { opacity:${theme.intensity/100}; }
+    html[data-tws-mode] #root { background:transparent!important; color:${theme.text}!important; }
+    [data-tws-part="main"], [data-tws-part="home"], [data-tws-part="thread"] { background:transparent!important; }
+    .chat-input-v2-container, .chat-input-v2-input-box-wrapper, .chat-input-v2-editor-part { background:transparent!important; color:${theme.text}!important; opacity:1!important; }
+    .chat-input-v2-editor-part * { color:${theme.text}!important; }
+    .chat-input-v2-editor-part [class*="placeholder"], .chat-input-v2-editor-part [data-placeholder] { color:${theme.muted}!important; }
+    [data-tws-part="sidebar"], [data-tws-part="composer"] { background:${surface}!important; background-image:none!important; color:${theme.text}!important; border:1px solid color-mix(in srgb,${theme.text} 16%,transparent)!important; }
+    [data-tws-part="dialog"] { background:${overlaySurface}!important; background-image:none!important; color:${theme.text}!important; border:1px solid color-mix(in srgb,${theme.text} 16%,transparent)!important; }
+    [data-tws-part="sidebar"] * { color:${theme.text}!important; }
+    [data-tws-part="sidebar"] .task-list-heading, [data-tws-part="sidebar"] .task-list-group-header-wrapper { color:${theme.muted}!important; }
+    [data-tws-part="home"] * { color:${theme.text}!important; }
+    [data-tws-part="home"] [class*="description"], [data-tws-part="home"] [class*="subtitle"] { color:${theme.muted}!important; }
+    [data-tws-part="dialog"] * { color:${theme.text}!important; border-color:color-mix(in srgb,${theme.text} 14%,transparent)!important; }
+    [data-tws-part="dialog"] { box-shadow:0 12px 32px #0009!important; color-scheme:${theme.mode}; }
+    [data-tws-part="dialog"] .monaco-menu, [data-tws-part="dialog"] .monaco-list, [data-tws-part="dialog"] .monaco-list-rows, [data-tws-part="dialog"] .select-box-dropdown-list-container { background:transparent!important; }
+    [data-tws-part="dialog"] .monaco-list-row:hover { background:color-mix(in srgb,${theme.text} 10%,transparent)!important; }
+    [data-tws-part="dialog"] .monaco-list-row.focused, [data-tws-part="dialog"] .monaco-list-row.selected { background:color-mix(in srgb,${theme.accent} 24%,transparent)!important; }
+    .solo-lite-titlebar-action-btn { color:${theme.text}!important; background:${overlaySurface}!important; border:1px solid color-mix(in srgb,${theme.text} 24%,transparent)!important; border-radius:${Math.max(6,Math.min(theme.radius,12))}px!important; box-shadow:0 2px 8px #0004!important; opacity:1!important; }
+    .solo-lite-titlebar-action-btn svg { color:inherit!important; fill:currentColor!important; stroke:currentColor!important; opacity:1!important; }
+    .solo-lite-titlebar-action-btn:hover, .solo-lite-titlebar-action-btn:focus-visible { color:${theme.text}!important; background:color-mix(in srgb,${theme.surface} 96%,${theme.accent})!important; border-color:color-mix(in srgb,${theme.text} 38%,transparent)!important; outline:2px solid color-mix(in srgb,${theme.accent} 72%,transparent)!important; outline-offset:1px!important; }
+    .solo-lite-titlebar-action-btn:active { background:color-mix(in srgb,${theme.accent} 28%,${theme.surface})!important; }
+    .context-view, .monaco-menu-container, .monaco-select-box-dropdown-container, .quick-input-widget { background:transparent!important; border-color:transparent!important; box-shadow:none!important; outline:none!important; color:${theme.text}!important; }
+    .context-view *, .monaco-menu-container *, .monaco-select-box-dropdown-container *, .quick-input-widget * { color:${theme.text}!important; }
+    .context-view .monaco-menu, .context-view .monaco-list, .monaco-menu-container .monaco-menu, .monaco-menu-container .monaco-list, .monaco-select-box-dropdown-container .monaco-list, .quick-input-widget { background:${theme.surface}!important; border:1px solid color-mix(in srgb,${theme.text} 16%,transparent)!important; border-radius:${theme.radius}px!important; box-shadow:0 12px 32px #0009!important; backdrop-filter:blur(${theme.blur}px); color-scheme:${theme.mode}; }
+    .context-view .monaco-scrollable-element, .monaco-menu-container .monaco-scrollable-element, .monaco-select-box-dropdown-container .monaco-scrollable-element { background:transparent!important; }
+    [data-tws-part="composer"] .chat-input-v2-container, [data-tws-part="composer"] .chat-input-v2-input-box-wrapper, [data-tws-part="composer"] .chat-input-v2-editor-part { background:transparent!important; color:${theme.text}!important; box-shadow:none!important; }
+    [data-tws-part="composer"] .chat-input-v2-editor-part * { color:${theme.text}!important; }
+    [data-tws-part="composer"] .chat-input-v2-editor-part [class*="placeholder"], [data-tws-part="composer"] .chat-input-v2-editor-part [data-placeholder] { color:${theme.muted}!important; }
+    [data-tws-part="composer"] button, [data-tws-part="composer"] [role="button"] { color:${theme.muted}!important; opacity:1!important; }
+    [data-tws-part="composer"] button svg, [data-tws-part="composer"] [role="button"] svg { color:inherit!important; opacity:1!important; }
+    [data-tws-part="home"] button:not([data-tws-part="composer"] button) { color:${theme.text}!important; background:${surface}!important; border:1px solid color-mix(in srgb,${theme.text} 18%,transparent)!important; box-shadow:none!important; }
+    [data-tws-part="home"] button:not([data-tws-part="composer"] button):hover { background:color-mix(in srgb,${theme.surface} 92%,${theme.accent})!important; }
+    [data-tws-part="sidebar"] ::-webkit-scrollbar-track, [data-tws-part="sidebar"] ::-webkit-scrollbar-corner { background:transparent!important; }
+    [data-tws-part="sidebar"] ::-webkit-scrollbar-thumb { background:color-mix(in srgb,${theme.muted} 24%,transparent)!important; border:2px solid transparent!important; background-clip:padding-box!important; border-radius:8px!important; }
+    [data-tws-part="composer"], [data-tws-part="dialog"] { border-radius:${theme.radius}px!important; backdrop-filter:blur(${theme.blur}px); }
+    [data-tws-part="composer"] { box-shadow:0 12px 35px #00000020; }
+    @media (prefers-reduced-transparency:reduce) { [data-tws-part] { backdrop-filter:none!important; } [data-tws-part="composer"], [data-tws-part="dialog"] { background:${theme.surface}!important; } }
+  `;
+  function reconcile() {
+    if (disposed) return;
+    if (!style.isConnected) document.head.append(style);
+    if (!layer.isConnected) document.body.prepend(layer);
+    for (const [node, original] of marked) {
+      if (!node.isConnected || !Object.values(contract.parts).some(selector => node.matches(selector))) {
+        if (original === null) node.removeAttribute('data-tws-part'); else node.setAttribute('data-tws-part', original);
+        marked.delete(node);
+      }
+    }
+    for (const [part, selector] of Object.entries(contract.parts)) for (const node of document.querySelectorAll(selector)) {
+      if (!marked.has(node)) marked.set(node, node.getAttribute('data-tws-part'));
+      if (node.getAttribute('data-tws-part') !== part) node.setAttribute('data-tws-part',part);
+    }
+    const home = !!document.querySelector(contract.parts.home);
+    if (layer.hasAttribute('data-home') !== home) layer.toggleAttribute('data-home',home);
+  }
+  function inspect() {
+    const parts = Object.fromEntries(Object.keys(contract.parts).map(part => [part, document.querySelectorAll(`[data-tws-part="${part}"]`).length]));
+    return { revision, installed: style.isConnected && layer.isConnected, level: parts.main && parts.composer ? 'full' : 'basic', parts, background: getComputedStyle(layer).backgroundColor };
+  }
+  function dispose() {
+    disposed = true; clearTimeout(timer); observer?.disconnect(); style.remove(); layer.remove();
+    for (const [node, original] of marked) { if (original === null) node.removeAttribute('data-tws-part'); else node.setAttribute('data-tws-part',original); }
+    if (oldMode === null) root.removeAttribute('data-tws-mode'); else root.setAttribute('data-tws-mode',oldMode);
+    delete window[KEY];
+  }
+  try {
+    reconcile();
+    observer = new MutationObserver(() => { if (!timer) timer = setTimeout(() => { timer = null; reconcile(); },150); });
+    observer.observe(document.body, { childList:true, subtree:true });
+    window[KEY] = { theme, image, contract, revision, inspect, dispose };
+    return inspect();
+  } catch (error) { dispose(); if (old) installTheme(old.theme,old.image,old.contract,old.revision); throw error; }
+}

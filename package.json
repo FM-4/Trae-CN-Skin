@@ -1,0 +1,11 @@
+{
+  "name": "trae-work-skin",
+  "version": "0.1.0",
+  "private": true,
+  "description": "雪墨 · TRAE CN 本地主题管理器",
+  "type": "module",
+  "main": "src/main/main.js",
+  "scripts": { "start": "electron ." },
+  "dependencies": { "ws": "^8.18.0" },
+  "devDependencies": { "electron": "^38.0.0" }
+}
