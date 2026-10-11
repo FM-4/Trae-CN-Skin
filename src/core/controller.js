@@ -8,10 +8,12 @@ import { loadTheme, listThemes } from './theme.js';
 // Fresh module URLs make edits to inject.js / adapter.js take effect on the next apply without restarting.
 async function runtime() {
   const stamp = Date.now();
-  const [{ installTheme }, { adapter }] = await Promise.all([import(`./inject.js?t=${stamp}`), import(`./adapter.js?t=${stamp}`)]);
-  return { installTheme, adapter };
+  const [{ installTheme }, { adapters }] = await Promise.all([import(`./inject.js?t=${stamp}`), import(`./adapter.js?t=${stamp}`)]);
+  return { installTheme, adapters };
 }
 const pageMode = value => value === 'light' ? 'light' : value === 'dark' || value === 'dark-blue' ? 'dark' : null;
+// Static copy only for target matching; payloads always use the freshly imported adapters.
+const PAGES = { '/solo/solo-lite.html': 'agent', '/workbench/workbench.html': 'ide' };
 
 export class Controller {
   constructor(onStatus = () => {}) {
@@ -27,19 +29,22 @@ export class Controller {
     catch (error) { if (this.status.phase !== 'error') this.report('error',error.message); throw error; }
     finally { this.busy = false; }
   }
+  // Agent workbench (solo-lite.html) and IDE windows (workbench.html, which also hosts SOLO mode) under the install folder.
   async matching(executable) {
     const root = path.dirname(await validateExecutable(executable)).toLowerCase();
     const list = await targets(this.port);
-    return list.filter(target => {
-      if (target.type !== 'page' || !target.webSocketDebuggerUrl) return false;
+    return list.flatMap(target => {
+      if (target.type !== 'page' || !target.webSocketDebuggerUrl) return [];
       try {
         const url = new URL(target.url);
-        if (!['file:','vscode-file:'].includes(url.protocol) || !url.pathname.endsWith('/solo/solo-lite.html')) return false;
+        if (!['file:','vscode-file:'].includes(url.protocol)) return [];
+        const page = Object.keys(PAGES).find(suffix => url.pathname.endsWith(suffix));
+        if (!page) return [];
         const decodedPath = decodeURIComponent(url.pathname);
         const filePath = url.protocol === 'file:' ? fileURLToPath(url) : decodedPath.replace(/^\/([A-Za-z]:\/)/, '$1').replaceAll('/', path.sep);
         const file = path.resolve(filePath).toLowerCase();
-        return file.startsWith(root + path.sep);
-      } catch { return false; }
+        return file.startsWith(root + path.sep) ? [{ ...target, surface: PAGES[page] }] : [];
+      } catch { return []; }
     });
   }
   async withTarget(target, action) {
@@ -56,9 +61,11 @@ export class Controller {
     if (!valid.length) throw new Error('No valid skins in themes/');
     return valid.find(theme => theme.id === preferred && theme.mode === mode) ?? valid.find(theme => theme.mode === mode) ?? null;
   }
-  async payload(id) {
+  async payload(id, surface) {
     const { theme, bytes, dataUrl } = await loadTheme(id);
-    const { installTheme, adapter } = await runtime();
+    const { installTheme, adapters } = await runtime();
+    const adapter = adapters[surface];
+    if (!adapter) throw new Error(`No adapter for surface ${surface}`);
     const source = installTheme.toString();
     const revision = createHash('sha256').update(JSON.stringify(theme)).update(JSON.stringify(adapter)).update(source).update(bytes).digest('hex').slice(0,20);
     return { theme, image:dataUrl, revision, source, adapter };
@@ -84,13 +91,14 @@ export class Controller {
       const theme = mode ? await this.pick(mode, preferred) : null;
       if (!theme) {
         if (state.skin) await this.remove(target);
-        windows.push({ id:target.id, mode:state.mode, theme:null });
+        windows.push({ id:target.id, surface:target.surface, mode:state.mode, theme:null });
         continue;
       }
-      let payload = this.payloads.get(theme.id);
-      if (!payload) { payload = await this.payload(theme.id); this.payloads.set(theme.id, payload); }
+      const key = `${theme.id}:${target.surface}`;
+      let payload = this.payloads.get(key);
+      if (!payload) { payload = await this.payload(theme.id, target.surface); this.payloads.set(key, payload); }
       const current = state.skin?.installed && state.skin.revision === payload.revision;
-      windows.push({ ...(current ? { id:target.id, ...state.skin } : await this.inject(target,payload)), mode:state.mode, theme });
+      windows.push({ ...(current ? { id:target.id, ...state.skin } : await this.inject(target,payload)), surface:target.surface, mode:state.mode, theme });
     }
     return { windows };
   }
@@ -104,7 +112,7 @@ export class Controller {
   async apply(executable, preferred) {
     return this.exclusive(async () => {
       const list = await this.matching(executable);
-      if (!list.length) throw new Error('TRAE CN Agent workbench not found; start TRAE CN first');
+      if (!list.length) throw new Error('No TRAE CN Agent or IDE window found; start TRAE CN first');
       clearInterval(this.timer); this.timer = null;
       // Theme files and injection code are re-read on every apply, so edits take effect immediately.
       this.payloads = new Map();
@@ -123,7 +131,7 @@ export class Controller {
       this.busy = true;
       try {
         const list = await this.matching(this.active.executable);
-        if (!list.length) { this.report('waiting','Waiting for the TRAE CN Agent workbench to reappear'); return; }
+        if (!list.length) { this.report('waiting','Waiting for a TRAE CN window to reappear'); return; }
         const result = await this.sync(list, this.active.preferred);
         if (result.yielded) {
           clearInterval(this.timer); this.timer = null; this.active = null;
@@ -156,7 +164,7 @@ export class Controller {
   // Reads what is actually on the page: injected revision/theme, TRAE mode, light blocks and low-contrast text.
   async check(executable) {
     const list = await this.matching(executable);
-    if (!list.length) throw new Error('TRAE CN Agent workbench not found');
+    if (!list.length) throw new Error('No TRAE CN Agent or IDE window found');
     const results = [];
     for (const target of list) results.push(await this.withTarget(target,session => session.evaluate(CHECK_SCRIPT,15000)));
     return results;
@@ -184,5 +192,5 @@ const CHECK_SCRIPT = String.raw`(() => {
       if (ratio < 3) contrast.add(label(el) + ' ' + ratio.toFixed(2));
     }
   }
-  return { url: location.pathname.split('/').slice(-2).join('/'), revision: state?.revision ?? null, theme: state?.theme?.id ?? null, enabled: state?.inspect().enabled ?? null, level: state?.inspect().level ?? null, mode: document.documentElement.getAttribute('data-theme'), lightBlocks: [...blocks].slice(0, 20), lowContrast: [...contrast].slice(0, 20) };
+  return { url: location.pathname.split('/').slice(-2).join('/'), solo: !!document.querySelector('.monaco-workbench .part.soloaisidebar'), revision: state?.revision ?? null, theme: state?.theme?.id ?? null, enabled: state?.inspect().enabled ?? null, level: state?.inspect().level ?? null, mode: document.documentElement.getAttribute('data-theme'), lightBlocks: [...blocks].slice(0, 20), lowContrast: [...contrast].slice(0, 20) };
 })()`;

@@ -55,6 +55,40 @@ export function installTheme(theme, image, contract, revision) {
     #trae-snow-ink-background { position:fixed; inset:0; pointer-events:none; z-index:-1; background-color:${theme.background}; }
     #trae-snow-ink-background::before { content:''; position:absolute; inset:0 0 0 auto; width:${theme.imageWidth}%; background-image:linear-gradient(to right,${theme.background},transparent 35%),url("${image}"); background-position:center,${theme.focusX}% ${theme.focusY}%; background-size:cover; opacity:${theme.taskIntensity/100}; }
     #trae-snow-ink-background[data-home]::before { opacity:${theme.intensity/100}; }
+    .context-view, .monaco-menu-container, .monaco-select-box-dropdown-container, .quick-input-widget { background:transparent!important; border-color:transparent!important; box-shadow:none!important; outline:none!important; color:${theme.text}!important; }
+    .context-view *, .monaco-menu-container *, .monaco-select-box-dropdown-container *, .quick-input-widget * { color:${theme.text}!important; }
+    .context-view .monaco-menu, .context-view .monaco-list, .monaco-menu-container .monaco-menu, .monaco-menu-container .monaco-list, .monaco-select-box-dropdown-container .monaco-list, .quick-input-widget { background:${theme.surface}!important; border:1px solid color-mix(in srgb,${theme.text} 16%,transparent)!important; border-radius:${theme.radius}px!important; box-shadow:0 12px 32px #0009!important; backdrop-filter:blur(${theme.blur}px); color-scheme:${theme.mode}; }
+    .context-view .monaco-scrollable-element, .monaco-menu-container .monaco-scrollable-element, .monaco-select-box-dropdown-container .monaco-scrollable-element { background:transparent!important; }
+    ${contract.surface === 'ide' ? ideRules() : agentRules()}
+  `;
+  // IDE window (and its SOLO layout): VS Code reads --vscode-* colors from :root, so making the base
+  // layers transparent lets the background show while panels keep a translucent surface.
+  function ideRules() {
+    const clear = '.monaco-workbench, .monaco-workbench .part.editor, .monaco-workbench .part.editor > .content, .monaco-workbench .editor-group-container, .monaco-workbench .editor-container, .monaco-workbench .monaco-editor, .monaco-workbench .monaco-editor .margin, .monaco-workbench .monaco-editor-background, .monaco-workbench .monaco-editor .inputarea.ime-input, .monaco-workbench .split-view-view, .monaco-workbench .monaco-grid-view';
+    return `
+    html[data-tws-mode] {
+      --vscode-editor-background:transparent!important; --vscode-editorGutter-background:transparent!important; --vscode-editorGroup-emptyBackground:transparent!important; --vscode-editorGroupHeader-tabsBackground:${surface}!important; --vscode-editorGroupHeader-noTabsBackground:${surface}!important;
+      --vscode-tab-activeBackground:${tint(6)}!important; --vscode-tab-inactiveBackground:transparent!important; --vscode-tab-activeForeground:${theme.text}!important; --vscode-tab-inactiveForeground:${theme.muted}!important; --vscode-tab-border:transparent!important;
+      --vscode-sideBar-background:${surface}!important; --vscode-sideBarSectionHeader-background:transparent!important; --vscode-sideBar-foreground:${theme.text}!important; --vscode-sideBarTitle-foreground:${theme.text}!important;
+      --vscode-panel-background:${surface}!important; --vscode-panel-border:${fade(theme.text,12)}!important; --vscode-terminal-background:transparent!important;
+      --vscode-activityBar-background:transparent!important; --vscode-activityBar-foreground:${theme.text}!important; --vscode-activityBar-inactiveForeground:${theme.muted}!important;
+      --vscode-titleBar-activeBackground:${surface}!important; --vscode-titleBar-inactiveBackground:${surface}!important; --vscode-titleBar-activeForeground:${theme.text}!important; --vscode-titleBar-inactiveForeground:${theme.muted}!important;
+      --vscode-statusBar-background:transparent!important; --vscode-statusBar-foreground:${theme.muted}!important; --vscode-statusBar-noFolderBackground:transparent!important;
+      --vscode-list-hoverBackground:${fade(theme.text,8)}!important; --vscode-list-activeSelectionBackground:${fade(theme.accent,26)}!important; --vscode-list-inactiveSelectionBackground:${fade(theme.text,10)}!important; --vscode-list-activeSelectionForeground:${theme.text}!important;
+      --vscode-editor-lineHighlightBackground:${fade(theme.text,5)}!important; --vscode-editor-lineHighlightBorder:transparent!important; --vscode-editorLineNumber-foreground:${fade(theme.muted,70)}!important; --vscode-editorLineNumber-activeForeground:${theme.text}!important;
+      --vscode-minimap-background:transparent!important; --vscode-breadcrumb-background:transparent!important; --vscode-editorStickyScroll-background:${overlaySurface}!important;
+      --vscode-icube-colorSnow:${tint(10)}!important; --vscode-icube-colorBlack:${theme.text}!important;
+    }
+    ${clear} { background-color:transparent!important; }
+    .monaco-workbench .part.sidebar, .monaco-workbench .part.auxiliarybar, .monaco-workbench .part.panel, .monaco-workbench .part.soloaisidebar { background-color:${surface}!important; backdrop-filter:blur(${theme.blur}px); }
+    .monaco-workbench .part.sidebar .composite, .monaco-workbench .part.sidebar .pane-composite-part > .content, .monaco-workbench .part.sidebar .split-view-view > .pane, .monaco-workbench .part.sidebar .pane-body, .monaco-workbench .part.sidebar .monaco-list, .monaco-workbench .part.sidebar .monaco-list-rows, .monaco-workbench .part.auxiliarybar .composite, .monaco-workbench .part.soloaisidebar .content { background-color:transparent!important; }
+    .monaco-workbench .part.editor .title.tabs, .monaco-workbench .part.editor .tabs-container, .monaco-workbench .part.editor .editor-actions { background-color:${surface}!important; }
+    .monaco-workbench .part.titlebar, .monaco-workbench .part.statusbar, .monaco-workbench .part.activitybar { background-color:transparent!important; }
+    .monaco-workbench .monaco-editor .minimap canvas { opacity:.6; }
+    `;
+  }
+  function agentRules() {
+    return `
     html[data-tws-mode] #root { background:transparent!important; color:${theme.text}!important; }
     [data-tws-part="main"], [data-tws-part="home"], [data-tws-part="thread"] { background:transparent!important; }
     .chat-input-v2-container, .chat-input-v2-input-box-wrapper, .chat-input-v2-editor-part { background:transparent!important; color:${theme.text}!important; opacity:1!important; }
@@ -69,10 +103,6 @@ export function installTheme(theme, image, contract, revision) {
     [data-tws-part="dialog"] .monaco-list-row:hover { background:color-mix(in srgb,${theme.text} 10%,transparent)!important; }
     [data-tws-part="dialog"] .monaco-list-row.focused, [data-tws-part="dialog"] .monaco-list-row.selected { background:color-mix(in srgb,${theme.accent} 24%,transparent)!important; }
     .panel-content { border-color:transparent!important; box-shadow:none!important; }
-    .context-view, .monaco-menu-container, .monaco-select-box-dropdown-container, .quick-input-widget { background:transparent!important; border-color:transparent!important; box-shadow:none!important; outline:none!important; color:${theme.text}!important; }
-    .context-view *, .monaco-menu-container *, .monaco-select-box-dropdown-container *, .quick-input-widget * { color:${theme.text}!important; }
-    .context-view .monaco-menu, .context-view .monaco-list, .monaco-menu-container .monaco-menu, .monaco-menu-container .monaco-list, .monaco-select-box-dropdown-container .monaco-list, .quick-input-widget { background:${theme.surface}!important; border:1px solid color-mix(in srgb,${theme.text} 16%,transparent)!important; border-radius:${theme.radius}px!important; box-shadow:0 12px 32px #0009!important; backdrop-filter:blur(${theme.blur}px); color-scheme:${theme.mode}; }
-    .context-view .monaco-scrollable-element, .monaco-menu-container .monaco-scrollable-element, .monaco-select-box-dropdown-container .monaco-scrollable-element { background:transparent!important; }
     [data-tws-part="composer"] .chat-input-v2-container, [data-tws-part="composer"] .chat-input-v2-input-box-wrapper, [data-tws-part="composer"] .chat-input-v2-editor-part { background:transparent!important; color:${theme.text}!important; box-shadow:none!important; }
     [data-tws-part="composer"] .chat-input-v2-editor-part * { color:${theme.text}!important; }
     [data-tws-part="composer"] .chat-input-v2-editor-part [class*="placeholder"], [data-tws-part="composer"] .chat-input-v2-editor-part [data-placeholder] { color:${theme.muted}!important; }
@@ -85,7 +115,8 @@ export function installTheme(theme, image, contract, revision) {
     [data-tws-part="composer"], [data-tws-part="dialog"] { border-radius:${theme.radius}px!important; backdrop-filter:blur(${theme.blur}px); }
     [data-tws-part="composer"] { box-shadow:0 12px 35px #00000020; }
     @media (prefers-reduced-transparency:reduce) { [data-tws-part] { backdrop-filter:none!important; } [data-tws-part="composer"], [data-tws-part="dialog"] { background:${theme.surface}!important; } }
-  `;
+    `;
+  }
   function reconcile() {
     if (disposed) return;
     if (!style.isConnected) document.head.append(style);
@@ -100,12 +131,12 @@ export function installTheme(theme, image, contract, revision) {
       if (!marked.has(node)) marked.set(node, node.getAttribute('data-tws-part'));
       if (node.getAttribute('data-tws-part') !== part) node.setAttribute('data-tws-part',part);
     }
-    const home = !!document.querySelector(contract.parts.home);
+    const home = !!contract.parts.home && !!document.querySelector(contract.parts.home);
     if (layer.hasAttribute('data-home') !== home) layer.toggleAttribute('data-home',home);
   }
   function inspect() {
     const parts = Object.fromEntries(Object.keys(contract.parts).map(part => [part, document.querySelectorAll(`[data-tws-part="${part}"]`).length]));
-    return { revision, installed: style.isConnected && layer.isConnected, enabled: !style.disabled, level: parts.main && parts.composer ? 'full' : 'basic', parts, background: getComputedStyle(layer).backgroundColor };
+    return { revision, surface: contract.surface, installed: style.isConnected && layer.isConnected, enabled: !style.disabled, level: contract.required.every(part => parts[part]) ? 'full' : 'basic', parts, background: getComputedStyle(layer).backgroundColor };
   }
   function dispose() {
     disposed = true; clearTimeout(timer); observer?.disconnect(); style.remove(); layer.remove();

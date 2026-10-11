@@ -18,17 +18,17 @@ if ($running.Count -gt 0) {
   Start-Process -FilePath $exe -ArgumentList '--remote-debugging-address=127.0.0.1', "--remote-debugging-port=$Port"
 }
 
-# Wait for the Agent workbench page rather than just the port; TRAE opens it a few seconds after launch.
+# Wait for an Agent or IDE window rather than just the port; TRAE opens one a few seconds after launch.
 $deadline = (Get-Date).AddSeconds(40)
 $ready = $false
 while ((Get-Date) -lt $deadline) {
   try {
     $pages = Invoke-RestMethod -Uri "http://127.0.0.1:$Port/json/list" -TimeoutSec 2
-    if ($pages | Where-Object { $_.type -eq 'page' -and $_.url -like '*solo/solo-lite.html*' }) { $ready = $true; break }
+    if ($pages | Where-Object { $_.type -eq 'page' -and ($_.url -like '*solo/solo-lite.html*' -or $_.url -like '*workbench/workbench.html*') }) { $ready = $true; break }
   } catch {}
   Start-Sleep -Milliseconds 700
 }
-if (-not $ready) { Fail 'Timed out waiting for the TRAE CN Agent workbench. Open the Agent window in TRAE CN, then run start.bat again.' }
+if (-not $ready) { Fail 'Timed out waiting for a TRAE CN Agent or IDE window. Open one in TRAE CN, then run start.bat again.' }
 Start-Sleep -Seconds 1
 
 # Inject in the foreground so errors show here, then hand over to a hidden watcher and exit.
