@@ -87,6 +87,8 @@ export function installTheme(theme, image, contract, revision) {
     .monaco-workbench .part.editor .title.tabs, .monaco-workbench .part.editor .tabs-container, .monaco-workbench .part.editor .editor-actions { background-color:${surface}!important; }
     .monaco-workbench .messageInputContainer { background-color:${surface}!important; border-radius:${theme.radius}px!important; }
     .monaco-workbench .part.titlebar, .monaco-workbench .part.statusbar, .monaco-workbench .part.activitybar { background-color:transparent!important; }
+    /* SOLO wraps the tool area in a grid node painted with --bg-bg-base-default; it would stack under the pane surface. */
+    .monaco-workbench.solo-mode .monaco-grid-branch-node.aichatview-marked, .solo-mode .monaco-grid-branch-node.aichatview-marked { background-color:transparent!important; }
     .monaco-workbench .monaco-editor .minimap canvas { opacity:.6; }
     `;
   }

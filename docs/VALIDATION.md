@@ -18,6 +18,7 @@ Target: local TRAE CN 1.107.1 (Electron 39.2.7 / Chrome 142), `D:\SoftWare\Trae 
 - [x] All code messages and tracked docs are in English; CLI, scripts and watcher log output verified.
 - [x] IDE window injected alongside the Agent workbench; editor shows the background, sidebar / auxiliary bar / tabs share one translucent surface; `check` reports 0 light blocks and 0 low-contrast text in both dark and light.
 - [x] IDE side panes use `ideSurfaceOpacity` / `ideBlur` (SUBARU 50/48% and 4px): the image shows through the AI chat panel, and `check` still reports 0 light blocks and 0 low-contrast text in both modes.
+- [x] SOLO layout inspected live: the AI sidebar and tool area each have one translucent layer (SOLO's `aichatview-marked` grid node is cleared); `check` reports 0 light blocks and 0 low-contrast text in both modes.
 - [x] Both windows follow TRAE dark/light together; SOLO parts (`soloaisidebar`, `soloTitlebar`) are matched by the IDE rules.
 
 ## Pending
@@ -25,7 +26,6 @@ Target: local TRAE CN 1.107.1 (Electron 39.2.7 / Chrome 142), `D:\SoftWare\Trae 
 - [ ] Readability of task chat, settings, and file / diff / terminal panels in both modes.
 - [ ] Chinese IME input, sending, scrolling, selection, copy and drag are unaffected.
 - [ ] Several Agent workbench windows injected at once.
-- [ ] SOLO layout inspected live (entering SOLO was not triggered; only its DOM parts were confirmed).
 - [ ] IDE terminal, diff editor, settings editor and extension webviews.
 - [ ] start.bat launching TRAE when it is not running; start.bat's quit prompt when TRAE was launched normally.
 - [ ] Watcher exiting about 15 seconds after TRAE closes.

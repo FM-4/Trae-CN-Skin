@@ -95,6 +95,8 @@ Tokens deliberately left alone: brand gradients, `--status-*` status colors, `--
 | `chrome` | Title bar (including SOLO's `soloTitlebar`), activity bar, status bar; transparent |
 | `dialog` | Same as above |
 
+In SOLO layout the tool area sits inside a grid node (`.monaco-grid-branch-node.aichatview-marked`) that TRAE paints with `--bg-bg-base-default`; the IDE rules clear it so it doesn't stack under the pane surface.
+
 IDE colors come from `--vscode-*` variables that TRAE writes on `:root`, so the IDE rules override them on `html[data-tws-mode]`. The AI chat inside the auxiliary bar is the same solo-lite component, so it also picks up the shared token overrides. The terminal (xterm canvas), minimap and extension webviews are drawn outside CSS reach; syntax colors come from TRAE's color theme.
 
 `full` is reported when every `required` part matches. That only means the key nodes exist, not that the page looks right, so still run `check`.
