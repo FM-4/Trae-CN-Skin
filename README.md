@@ -2,6 +2,18 @@
 
 Injects a local background image and color scheme into TRAE CN's Agent workbench and IDE window (including SOLO mode) without modifying TRAE's install files or settings. Injection goes through TRAE's debug port (127.0.0.1:9341 only), and the skin follows TRAE's own light/dark mode.
 
+## Preview
+
+Previews of `SUBARU-Light` in TRAE CN. Personal names, project names, task titles, source code and chat content have been replaced with Lorem ipsum placeholders; account avatars use generic icons.
+
+### Agent workbench
+
+![SUBARU-Light in the TRAE CN Agent workbench, with an illustrated background and translucent panels](docs/images/subaru-light-agent.png)
+
+### IDE window
+
+![SUBARU-Light in the TRAE CN IDE window, with the background visible through the editor and AI chat panel](docs/images/subaru-light-ide.png)
+
 ## Usage
 
 Requires Node.js 22 or later. No `npm install` needed.
