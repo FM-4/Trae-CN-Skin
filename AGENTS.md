@@ -2,7 +2,7 @@
 
 ## Project Structure & Module Organization
 
-Injects local themes into the TRAE CN Agent workbench over loopback CDP. Users double-click `start.bat` / `stop.bat`; there is no GUI and no npm dependency.
+Injects local themes into TRAE CN's Agent workbench and IDE window (IDE and SOLO layouts) over loopback CDP. Users double-click `start.bat` / `stop.bat`; there is no GUI and no npm dependency.
 
 - `start.bat`, `stop.bat`: ASCII-only wrappers that run `scripts/*.ps1` with `-ExecutionPolicy Bypass`; they close on success and pause on failure. Keep all file names ASCII.
 - `scripts/`: Windows PowerShell 5.1 scripts (saved as UTF-8 with BOM) that locate TRAE via its uninstall registry key, launch it with the debug port, and manage the watcher PID.

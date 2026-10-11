@@ -73,7 +73,9 @@ Tokens deliberately left alone: brand gradients, `--status-*` status colors, `--
 
 ### adapter.js
 
-`parts` groups TRAE class names into parts:
+`adapters` holds one contract per surface. `page` is the URL suffix used to match CDP targets, `root` must exist before injecting, and `required` lists the parts that must match for `full`.
+
+**`agent`** (`solo/solo-lite.html`, the Agent workbench):
 
 | Part | Purpose |
 | --- | --- |
@@ -82,6 +84,17 @@ Tokens deliberately left alone: brand gradients, `--status-*` status colors, `--
 | `composer` | Composer shell, translucent glass |
 | `dialog` | Menus, dialogs, dropdowns; popover color |
 
-`full` is reported when both `main` and `composer` match. That only means the key nodes exist, not that the page looks right, so still run `check`.
+**`ide`** (`workbench/workbench.html`, the IDE window; SOLO mode is a layout of the same page):
 
-TRAE updates may rename classes: watch for `match=basic` in `check`, then compare class names in the dist folder above.
+| Part | Purpose |
+| --- | --- |
+| `editor` | Editor area; transparent, with `--vscode-editor-background` set to transparent |
+| `pane` | Sidebar, auxiliary bar (AI chat), panel, and SOLO's `soloaisidebar`; one translucent surface each |
+| `chrome` | Title bar (including SOLO's `soloTitlebar`), activity bar, status bar; transparent |
+| `dialog` | Same as above |
+
+IDE colors come from `--vscode-*` variables that TRAE writes on `:root`, so the IDE rules override them on `html[data-tws-mode]`. The AI chat inside the auxiliary bar is the same solo-lite component, so it also picks up the shared token overrides. The terminal (xterm canvas), minimap and extension webviews are drawn outside CSS reach; syntax colors come from TRAE's color theme.
+
+`full` is reported when every `required` part matches. That only means the key nodes exist, not that the page looks right, so still run `check`.
+
+TRAE updates may rename classes: watch for `match=basic` in `check`, then compare class names in the dist folder above, or in `resources/app/out/vs/workbench/workbench.desktop.main.css` for the IDE.

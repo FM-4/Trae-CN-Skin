@@ -1,6 +1,6 @@
 # TRAE CN Skin
 
-Injects a local background image and color scheme into the TRAE CN Agent workbench without modifying TRAE's install files or settings. Injection goes through TRAE's debug port (127.0.0.1:9341 only), and the skin follows TRAE's own light/dark mode.
+Injects a local background image and color scheme into TRAE CN's Agent workbench and IDE window (including SOLO mode) without modifying TRAE's install files or settings. Injection goes through TRAE's debug port (127.0.0.1:9341 only), and the skin follows TRAE's own light/dark mode.
 
 ## Usage
 
@@ -47,4 +47,4 @@ docs/                   architecture, skin guide, sources
 
 ## Scope
 
-Windows only, TRAE CN (China edition) Agent workbench only. The IDE editor window and the native title bar buttons are out of scope. `themes/*/background.jpg` is personal local reference material with no assumed right to redistribute; see [docs/SOURCES.md](docs/SOURCES.md).
+Windows only, TRAE CN (China edition) only. Covers the Agent workbench and the IDE window in both IDE and SOLO layouts. Out of scope: the native title bar buttons, terminal text drawn on canvas, extension webviews, and syntax highlighting colors (use a TRAE color theme for those). `themes/*/background.jpg` is personal local reference material with no assumed right to redistribute; see [docs/SOURCES.md](docs/SOURCES.md).

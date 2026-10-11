@@ -13,7 +13,7 @@ This project is written independently. It draws on the architecture and TRAE sel
 
 `themes/*/background.jpg` is the original image supplied by the user. Its pixels are unmodified; it is only cropped and masked with CSS. It is treated as personal local reference material, and no right to redistribute it publicly is assumed.
 
-Target studied locally: `D:\SoftWare\Trae CN\Trae CN.exe`. The install contains the Agent workbench page `resources/app/out/vs/code/electron-browser/solo/solo-lite.html`; part class names come from `@byted-icube/solo-lite/dist/` in that install.
+Target studied locally: `D:\SoftWare\Trae CN\Trae CN.exe`. The install contains the Agent workbench page `resources/app/out/vs/code/electron-browser/solo/solo-lite.html` and the IDE page `.../workbench/workbench.html`; Agent part class names come from `@byted-icube/solo-lite/dist/`, IDE ones from VS Code's workbench parts in that install.
 
 TRAE CN interface structure, from the official docs:
 - Agent window quick start: https://docs.trae.cn/ide_get-started-with-the-agent-window

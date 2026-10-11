@@ -20,7 +20,7 @@ start.ps1 locates `Trae CN.exe` from the uninstall registry entry written by the
 - TRAE running with the port open: use it.
 - TRAE running without the debug port: ask the user to fully quit it. The process is never terminated.
 
-It then waits up to 40 seconds for the `solo-lite.html` page and runs `skin.mjs apply` in the foreground, so success or failure shows in the window. Next it stops any old watcher, starts `skin.mjs watch` with `Start-Process -WindowStyle Hidden`, and exits. The bat waits 3 seconds and closes on success, or pauses on failure.
+It then waits up to 40 seconds for an Agent (`solo-lite.html`) or IDE (`workbench.html`) page and runs `skin.mjs apply` in the foreground, so success or failure shows in the window. Next it stops any old watcher, starts `skin.mjs watch` with `Start-Process -WindowStyle Hidden`, and exits. The bat waits 3 seconds and closes on success, or pauses on failure.
 
 The watcher writes its PID to `watcher.pid` and state changes to `watcher.log`. It exits on its own when TRAE has been unreachable for 15 seconds (TRAE closed) or when a newer instance takes over the page.
 
@@ -40,7 +40,7 @@ All file names are ASCII, and .bat contents are ASCII only to avoid cmd code pag
 
 `idle → connecting → connected → applying → applied / partial`; a lost connection goes to `waiting`, failures to `error`, an explicit removal to `restored`.
 
-The default port is 9341 and only `Trae CN.exe` is accepted. Only `solo/solo-lite.html` pages (`file:` or `vscode-file:`) under that install folder are matched; IDE editor windows are not injected. If another service holds the port, the scripts report an error; they never take the port or kill processes. CDP addresses must be loopback with the matching port. Path and URL filtering reduce mistaken injection but are not authentication.
+The default port is 9341 and only `Trae CN.exe` is accepted. Only `solo/solo-lite.html` (Agent) and `workbench/workbench.html` (IDE) pages (`file:` or `vscode-file:`) under that install folder are matched; other windows such as the floating chat button are skipped. If another service holds the port, the scripts report an error; they never take the port or kill processes. CDP addresses must be loopback with the matching port. Path and URL filtering reduce mistaken injection but are not authentication.
 
 ## Following TRAE's light/dark mode
 

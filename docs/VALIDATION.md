@@ -1,6 +1,6 @@
 # Validation record
 
-Target: local TRAE CN 1.107.1 (Electron 39.2.7 / Chrome 142), `D:\SoftWare\Trae CN\Trae CN.exe`, Agent workbench `solo-lite.html`.
+Target: local TRAE CN 1.107.1 (Electron 39.2.7 / Chrome 142), `D:\SoftWare\Trae CN\Trae CN.exe`, Agent workbench `solo-lite.html` and IDE window `workbench.html` (IDE and SOLO layouts).
 
 ## Done (2026-10-10, live via CDP)
 
@@ -16,12 +16,16 @@ Target: local TRAE CN 1.107.1 (Electron 39.2.7 / Chrome 142), `D:\SoftWare\Trae 
 - [x] TRAE path comes from the uninstall registry entry; `skin.mjs` also finds it when run directly.
 - [x] .ps1 files parse without errors in Windows PowerShell 5.1 (UTF-8 BOM).
 - [x] All code messages and tracked docs are in English; CLI, scripts and watcher log output verified.
+- [x] IDE window injected alongside the Agent workbench; editor shows the background, sidebar / auxiliary bar / tabs share one translucent surface; `check` reports 0 light blocks and 0 low-contrast text in both dark and light.
+- [x] Both windows follow TRAE dark/light together; SOLO parts (`soloaisidebar`, `soloTitlebar`) are matched by the IDE rules.
 
 ## Pending
 
 - [ ] Readability of task chat, settings, and file / diff / terminal panels in both modes.
 - [ ] Chinese IME input, sending, scrolling, selection, copy and drag are unaffected.
 - [ ] Several Agent workbench windows injected at once.
+- [ ] SOLO layout inspected live (entering SOLO was not triggered; only its DOM parts were confirmed).
+- [ ] IDE terminal, diff editor, settings editor and extension webviews.
 - [ ] start.bat launching TRAE when it is not running; start.bat's quit prompt when TRAE was launched normally.
 - [ ] Watcher exiting about 15 seconds after TRAE closes.
 - [ ] Double-clicking start.bat / stop.bat in File Explorer (so far verified via Start-Process).
