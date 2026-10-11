@@ -3,7 +3,7 @@ export function installTheme(theme, image, contract, revision) {
   const KEY = '__traeSnowInkV1';
   const prior = window[KEY];
   if (prior?.revision === revision && prior.inspect().installed) return prior.inspect();
-  if (!document.querySelector(contract.root)) throw new Error('TRAE 根节点尚未就绪');
+  if (!document.querySelector(contract.root)) throw new Error('TRAE root element is not ready');
   const old = prior ? { theme: prior.theme, image: prior.image, contract: prior.contract, revision: prior.revision } : null;
   prior?.dispose();
   const root = document.documentElement;
@@ -15,6 +15,10 @@ export function installTheme(theme, image, contract, revision) {
   const surface = `color-mix(in srgb, ${theme.surface} ${theme.surfaceOpacity}%, transparent)`;
   const overlayOpacity = Math.max(theme.surfaceOpacity, 88);
   const overlaySurface = `color-mix(in srgb, ${theme.surface} ${overlayOpacity}%, transparent)`;
+  const fade = (color, pct) => `color-mix(in srgb,${color} ${pct}%,transparent)`;
+  const tint = pct => fade(`color-mix(in srgb,${theme.text} ${pct}%,${theme.surface})`, theme.surfaceOpacity);
+  // solo-lite redeclares hardcoded tokens on html[data-theme], body.vs.solo-lite and .solo-theme[data-theme]; override at each scope.
+  const tokenScope = 'html[data-tws-mode], html[data-tws-mode] body, html[data-tws-mode] .solo-theme, html[data-tws-mode] [data-theme]';
   style.textContent = `
     html[data-tws-mode] {
       --vscode-foreground:${theme.text}!important; --vscode-descriptionForeground:${theme.muted}!important; --vscode-input-placeholderForeground:${theme.muted}!important; --vscode-focusBorder:${theme.accent}!important; --vscode-button-background:${theme.accent}!important; --vscode-button-foreground:${theme.background}!important; --vscode-input-background:${surface}!important; --vscode-input-foreground:${theme.text}!important;
@@ -29,6 +33,24 @@ export function installTheme(theme, image, contract, revision) {
       --vscode-icube-colorBgTr1:color-mix(in srgb,${theme.text} 7%,transparent)!important; --vscode-icube-colorBgTr2:color-mix(in srgb,${theme.text} 11%,transparent)!important; --vscode-icube-colorBlackText1:${theme.text}!important; --vscode-icube-colorHighlightText:${theme.accent}!important; --vscode-icube-colorTextHighlight:${theme.accent}!important; --vscode-icube-emptyExplorerButtonTextColor:${theme.text}!important; --vscode-icube-agentReviewSummaryBg:${surface}!important; --vscode-icube-qualityBackgroundColor:${surface}!important; --vscode-icube-qualityForeground:${theme.text}!important; --icube-statusBar-background:${surface}!important; --icube-statusBar-color:${theme.text}!important;
       --vscode-icube-box-shadow1:0 4px 12px #0005!important; --vscode-icube-box-shadow2:0 8px 24px #0007!important; --vscode-icube-box-shadow3:0 14px 38px #0009!important; --vscode-icube-elevation-100-tooltip:0 4px 12px #0006!important; --vscode-icube-elevation-200-menu-panel:0 8px 24px #0008!important; --vscode-icube-elevation-300-modal-panel:0 14px 38px #0009!important;
     }
+    ${tokenScope} {
+      --bg-bg-base-default:${surface}!important; --bg-bg-base-secondary:${tint(4)}!important; --bg-bg-base-tertiary:${tint(8)}!important; --bg-bg-menu:${overlaySurface}!important; --bg-bg-tooltip:${overlaySurface}!important;
+      --bg-bg-overlay-l1:${fade(theme.text,6)}!important; --bg-bg-overlay-l2:${fade(theme.text,9)}!important; --bg-bg-overlay-l3:${fade(theme.text,13)}!important; --bg-bg-overlay-l4:${fade(theme.text,18)}!important;
+      --bg-bg-brand:${theme.accent}!important; --bg-bg-brand-hover:color-mix(in srgb,${theme.accent} 86%,${theme.text})!important; --bg-bg-brand-disabled:${fade(theme.accent,24)}!important;
+      --bg-bg-invert:${theme.text}!important; --bg-bg-invert-hover:color-mix(in srgb,${theme.text} 88%,${theme.surface})!important; --bg-bg-invert-active:${theme.muted}!important; --bg-bg-invert-disabled:${fade(theme.muted,18)}!important;
+      --text-text-default:${theme.text}!important; --text-text-default-hover:${theme.text}!important; --text-text-default-active:${theme.text}!important; --text-text-secondary:${theme.muted}!important; --text-text-secondary-hover:${theme.text}!important; --text-text-secondary-active:${theme.text}!important;
+      --text-text-tertiary:${fade(theme.muted,78)}!important; --text-text-disabled:${fade(theme.muted,58)}!important; --text-text-brand:${theme.accent}!important; --text-text-brand-hover:${theme.text}!important; --text-text-onbrand:${theme.background}!important; --text-text-onaccent:${theme.background}!important;
+      --icon-icon-default:${theme.text}!important; --icon-icon-default-hover:${theme.text}!important; --icon-icon-default-active:${theme.text}!important; --icon-icon-secondary:${theme.muted}!important; --icon-icon-secondary-hover:${theme.text}!important; --icon-icon-secondary-active:${theme.text}!important;
+      --icon-icon-tertiary:${fade(theme.muted,78)}!important; --icon-icon-disabled:${fade(theme.muted,58)}!important; --icon-icon-brand:${theme.accent}!important; --icon-icon-brand-hover:${theme.text}!important; --icon-icon-onbrand:${theme.background}!important; --icon-icon-onaccent:${theme.background}!important;
+      --bg-bg-input:${surface}!important; --bg-bg-card:${tint(4)}!important; --bg-bg-card-hover:${tint(8)}!important; --bg-bg-float:${overlaySurface}!important; --bg-bg-neutral-solid:${tint(18)}!important; --bg-bg-overlay-l0:${fade(theme.text,3)}!important;
+      --bg-bg-base-hover:${fade(theme.text,8)}!important; --bg-bg-hover:${fade(theme.text,8)}!important; --bg-bg-neutral-l1:${fade(theme.text,8)}!important; --bg-bg-active:${fade(theme.text,12)}!important; --bg-bg-brand-popup:${fade(theme.accent,12)}!important;
+      --text-text-default-reverse:${theme.background}!important; --text-text-on-inverse:${theme.background}!important; --border-border-focus:${theme.accent}!important; --icon-icon-accent:${theme.accent}!important;
+      --border-border-neutral-l1:${fade(theme.text,10)}!important; --border-border-neutral-l2:${fade(theme.text,16)}!important; --border-border-neutral-l3:${fade(theme.text,22)}!important; --border-border-contrast:${theme.text}!important; --border-border-brand:${theme.accent}!important;
+      --color-bg-1:${surface}!important; --color-bg-2:${overlaySurface}!important; --color-bg-3:${overlaySurface}!important; --color-bg-4:${overlaySurface}!important; --color-bg-5:${overlaySurface}!important; --color-menu-light-bg:${overlaySurface}!important;
+      --color-text-1:${theme.text}!important; --color-text-2:${theme.text}!important; --color-text-3:${theme.muted}!important; --color-text-4:${fade(theme.muted,58)}!important;
+      --color-fill-1:${fade(theme.text,4)}!important; --color-fill-2:${fade(theme.text,7)}!important; --color-fill-3:${fade(theme.text,10)}!important; --color-fill-4:${fade(theme.text,14)}!important;
+      --color-border-1:${fade(theme.text,8)}!important; --color-border-2:${fade(theme.text,12)}!important; --color-border-3:${fade(theme.text,18)}!important; --color-border-4:${fade(theme.text,24)}!important;
+    }
     html[data-tws-mode] body { background:${theme.background}!important; color:${theme.text}!important; isolation:isolate; }
     #trae-snow-ink-background { position:fixed; inset:0; pointer-events:none; z-index:-1; background-color:${theme.background}; }
     #trae-snow-ink-background::before { content:''; position:absolute; inset:0 0 0 auto; width:${theme.imageWidth}%; background-image:linear-gradient(to right,${theme.background},transparent 35%),url("${image}"); background-position:center,${theme.focusX}% ${theme.focusY}%; background-size:cover; opacity:${theme.taskIntensity/100}; }
@@ -38,21 +60,15 @@ export function installTheme(theme, image, contract, revision) {
     .chat-input-v2-container, .chat-input-v2-input-box-wrapper, .chat-input-v2-editor-part { background:transparent!important; color:${theme.text}!important; opacity:1!important; }
     .chat-input-v2-editor-part * { color:${theme.text}!important; }
     .chat-input-v2-editor-part [class*="placeholder"], .chat-input-v2-editor-part [data-placeholder] { color:${theme.muted}!important; }
-    [data-tws-part="sidebar"], [data-tws-part="composer"] { background:${surface}!important; background-image:none!important; color:${theme.text}!important; border:1px solid color-mix(in srgb,${theme.text} 16%,transparent)!important; }
+    [data-tws-part="sidebar"]:not([data-tws-part="sidebar"] *), [data-tws-part="composer"] { background:${surface}!important; background-image:none!important; color:${theme.text}!important; border:1px solid color-mix(in srgb,${theme.text} 16%,transparent)!important; }
     [data-tws-part="dialog"] { background:${overlaySurface}!important; background-image:none!important; color:${theme.text}!important; border:1px solid color-mix(in srgb,${theme.text} 16%,transparent)!important; }
-    [data-tws-part="sidebar"] * { color:${theme.text}!important; }
     [data-tws-part="sidebar"] .task-list-heading, [data-tws-part="sidebar"] .task-list-group-header-wrapper { color:${theme.muted}!important; }
-    [data-tws-part="home"] * { color:${theme.text}!important; }
     [data-tws-part="home"] [class*="description"], [data-tws-part="home"] [class*="subtitle"] { color:${theme.muted}!important; }
-    [data-tws-part="dialog"] * { color:${theme.text}!important; border-color:color-mix(in srgb,${theme.text} 14%,transparent)!important; }
     [data-tws-part="dialog"] { box-shadow:0 12px 32px #0009!important; color-scheme:${theme.mode}; }
     [data-tws-part="dialog"] .monaco-menu, [data-tws-part="dialog"] .monaco-list, [data-tws-part="dialog"] .monaco-list-rows, [data-tws-part="dialog"] .select-box-dropdown-list-container { background:transparent!important; }
     [data-tws-part="dialog"] .monaco-list-row:hover { background:color-mix(in srgb,${theme.text} 10%,transparent)!important; }
     [data-tws-part="dialog"] .monaco-list-row.focused, [data-tws-part="dialog"] .monaco-list-row.selected { background:color-mix(in srgb,${theme.accent} 24%,transparent)!important; }
-    .solo-lite-titlebar-action-btn { color:${theme.text}!important; background:${overlaySurface}!important; border:1px solid color-mix(in srgb,${theme.text} 24%,transparent)!important; border-radius:${Math.max(6,Math.min(theme.radius,12))}px!important; box-shadow:0 2px 8px #0004!important; opacity:1!important; }
-    .solo-lite-titlebar-action-btn svg { color:inherit!important; fill:currentColor!important; stroke:currentColor!important; opacity:1!important; }
-    .solo-lite-titlebar-action-btn:hover, .solo-lite-titlebar-action-btn:focus-visible { color:${theme.text}!important; background:color-mix(in srgb,${theme.surface} 96%,${theme.accent})!important; border-color:color-mix(in srgb,${theme.text} 38%,transparent)!important; outline:2px solid color-mix(in srgb,${theme.accent} 72%,transparent)!important; outline-offset:1px!important; }
-    .solo-lite-titlebar-action-btn:active { background:color-mix(in srgb,${theme.accent} 28%,${theme.surface})!important; }
+    .panel-content { border-color:transparent!important; box-shadow:none!important; }
     .context-view, .monaco-menu-container, .monaco-select-box-dropdown-container, .quick-input-widget { background:transparent!important; border-color:transparent!important; box-shadow:none!important; outline:none!important; color:${theme.text}!important; }
     .context-view *, .monaco-menu-container *, .monaco-select-box-dropdown-container *, .quick-input-widget * { color:${theme.text}!important; }
     .context-view .monaco-menu, .context-view .monaco-list, .monaco-menu-container .monaco-menu, .monaco-menu-container .monaco-list, .monaco-select-box-dropdown-container .monaco-list, .quick-input-widget { background:${theme.surface}!important; border:1px solid color-mix(in srgb,${theme.text} 16%,transparent)!important; border-radius:${theme.radius}px!important; box-shadow:0 12px 32px #0009!important; backdrop-filter:blur(${theme.blur}px); color-scheme:${theme.mode}; }
@@ -89,7 +105,7 @@ export function installTheme(theme, image, contract, revision) {
   }
   function inspect() {
     const parts = Object.fromEntries(Object.keys(contract.parts).map(part => [part, document.querySelectorAll(`[data-tws-part="${part}"]`).length]));
-    return { revision, installed: style.isConnected && layer.isConnected, level: parts.main && parts.composer ? 'full' : 'basic', parts, background: getComputedStyle(layer).backgroundColor };
+    return { revision, installed: style.isConnected && layer.isConnected, enabled: !style.disabled, level: parts.main && parts.composer ? 'full' : 'basic', parts, background: getComputedStyle(layer).backgroundColor };
   }
   function dispose() {
     disposed = true; clearTimeout(timer); observer?.disconnect(); style.remove(); layer.remove();
@@ -97,10 +113,21 @@ export function installTheme(theme, image, contract, revision) {
     if (oldMode === null) root.removeAttribute('data-tws-mode'); else root.setAttribute('data-tws-mode',oldMode);
     delete window[KEY];
   }
+  // Follow TRAE's own light/dark setting: switch the skin off the moment TRAE leaves the mode it was made for,
+  // so a wrong-mode skin never lingers until the watcher swaps or removes it.
+  function follow() {
+    const value = root.getAttribute('data-theme');
+    const on = (value === 'light' ? 'light' : value === 'dark' || value === 'dark-blue' ? 'dark' : null) === theme.mode;
+    style.disabled = !on; layer.hidden = !on;
+  }
   try {
-    reconcile();
-    observer = new MutationObserver(() => { if (!timer) timer = setTimeout(() => { timer = null; reconcile(); },150); });
+    reconcile(); follow();
+    observer = new MutationObserver(records => {
+      if (records.some(record => record.target === root && record.attributeName === 'data-theme')) follow();
+      if (!timer) timer = setTimeout(() => { timer = null; reconcile(); },150);
+    });
     observer.observe(document.body, { childList:true, subtree:true });
+    observer.observe(root, { attributes:true, attributeFilter:['data-theme'] });
     window[KEY] = { theme, image, contract, revision, inspect, dispose };
     return inspect();
   } catch (error) { dispose(); if (old) installTheme(old.theme,old.image,old.contract,old.revision); throw error; }

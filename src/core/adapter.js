@@ -8,6 +8,6 @@ export const adapter = {
     composer: '.messageInputContainer',
     thread: '.virtualized-message-list-view, .virtualized-message-list-view__content, .agent-chat-view, .ai-chat-pane-content',
     home: '.initial-chat-panel, .assistant-welcome-container, .ai-chat-pane-welcome',
-    dialog: '[role="dialog"], [role="alertdialog"], [role="menu"], [role="listbox"], [role="tooltip"], [aria-modal="true"], .context-view, .monaco-menu-container, .monaco-select-box-dropdown-container, .quick-input-widget'
+    dialog: '[role="dialog"], [role="alertdialog"], [role="menu"], [role="listbox"], [aria-modal="true"], .context-view, .monaco-menu-container, .monaco-select-box-dropdown-container, .quick-input-widget'
   }
 };
