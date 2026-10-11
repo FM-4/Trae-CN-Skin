@@ -6,6 +6,7 @@
   "focusX": 76, "focusY": 42, "imageWidth": 52,
   "intensity": 22, "taskIntensity": 9,
   "surfaceOpacity": 78, "blur": 12, "radius": 14,
+  "ideSurfaceOpacity": 50, "ideBlur": 4,
   "accent": "#4e6473", "text": "#25282c", "muted": "#626873",
   "background": "#e8e9e7", "surface": "#f6f6f3"
 }

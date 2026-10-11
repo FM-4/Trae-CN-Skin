@@ -28,6 +28,8 @@ Unknown fields are dropped. Out-of-range values are rejected, never silently cor
 | `taskIntensity` | 0–100 | Image opacity on task chat pages; usually lower so text stays readable |
 | `surfaceOpacity` | 0–100 | Opacity of panels such as the sidebar, composer and cards; menus and popovers use at least 88 |
 | `blur` | 0–40 | Backdrop blur for the composer and popovers (px) |
+| `ideSurfaceOpacity` | 0–100, optional | Opacity of the IDE window's side panes (explorer, AI chat, bottom panel, SOLO AI sidebar). Defaults to `surfaceOpacity`; lower it to let the image show through. The AI chat composer keeps `surfaceOpacity` |
+| `ideBlur` | 0–40, optional | Backdrop blur for those IDE panes (px); defaults to `blur`, and 0 turns it off |
 | `radius` | 0–24 | Corner radius for the composer and popovers (px) |
 | `background` | `#rrggbb` | Window base color, also the color the image fades into |
 | `surface` | `#rrggbb` | Panel color |

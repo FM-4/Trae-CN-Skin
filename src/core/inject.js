@@ -64,13 +64,15 @@ export function installTheme(theme, image, contract, revision) {
   // IDE window (and its SOLO layout): VS Code reads --vscode-* colors from :root, so making the base
   // layers transparent lets the background show while panels keep a translucent surface.
   function ideRules() {
+    // Side panes (explorer, AI chat, panel, SOLO AI sidebar) get their own opacity and blur so the image shows through.
+    const pane = `color-mix(in srgb, ${theme.surface} ${theme.ideSurfaceOpacity}%, transparent)`;
     const clear = '.monaco-workbench, .monaco-workbench .part.editor, .monaco-workbench .part.editor > .content, .monaco-workbench .editor-group-container, .monaco-workbench .editor-container, .monaco-workbench .monaco-editor, .monaco-workbench .monaco-editor .margin, .monaco-workbench .monaco-editor-background, .monaco-workbench .monaco-editor .inputarea.ime-input, .monaco-workbench .split-view-view, .monaco-workbench .monaco-grid-view';
     return `
     html[data-tws-mode] {
       --vscode-editor-background:transparent!important; --vscode-editorGutter-background:transparent!important; --vscode-editorGroup-emptyBackground:transparent!important; --vscode-editorGroupHeader-tabsBackground:${surface}!important; --vscode-editorGroupHeader-noTabsBackground:${surface}!important;
       --vscode-tab-activeBackground:${tint(6)}!important; --vscode-tab-inactiveBackground:transparent!important; --vscode-tab-activeForeground:${theme.text}!important; --vscode-tab-inactiveForeground:${theme.muted}!important; --vscode-tab-border:transparent!important;
-      --vscode-sideBar-background:${surface}!important; --vscode-sideBarSectionHeader-background:transparent!important; --vscode-sideBar-foreground:${theme.text}!important; --vscode-sideBarTitle-foreground:${theme.text}!important;
-      --vscode-panel-background:${surface}!important; --vscode-panel-border:${fade(theme.text,12)}!important; --vscode-terminal-background:transparent!important;
+      --vscode-sideBar-background:${pane}!important; --vscode-sideBarSectionHeader-background:transparent!important; --vscode-sideBar-foreground:${theme.text}!important; --vscode-sideBarTitle-foreground:${theme.text}!important;
+      --vscode-panel-background:${pane}!important; --vscode-panel-border:${fade(theme.text,12)}!important; --vscode-terminal-background:transparent!important;
       --vscode-activityBar-background:transparent!important; --vscode-activityBar-foreground:${theme.text}!important; --vscode-activityBar-inactiveForeground:${theme.muted}!important;
       --vscode-titleBar-activeBackground:${surface}!important; --vscode-titleBar-inactiveBackground:${surface}!important; --vscode-titleBar-activeForeground:${theme.text}!important; --vscode-titleBar-inactiveForeground:${theme.muted}!important;
       --vscode-statusBar-background:transparent!important; --vscode-statusBar-foreground:${theme.muted}!important; --vscode-statusBar-noFolderBackground:transparent!important;
@@ -80,9 +82,10 @@ export function installTheme(theme, image, contract, revision) {
       --vscode-icube-colorSnow:${tint(10)}!important; --vscode-icube-colorBlack:${theme.text}!important;
     }
     ${clear} { background-color:transparent!important; }
-    .monaco-workbench .part.sidebar, .monaco-workbench .part.auxiliarybar, .monaco-workbench .part.panel, .monaco-workbench .part.soloaisidebar { background-color:${surface}!important; backdrop-filter:blur(${theme.blur}px); }
+    .monaco-workbench .part.sidebar, .monaco-workbench .part.auxiliarybar, .monaco-workbench .part.panel, .monaco-workbench .part.soloaisidebar { background-color:${pane}!important; backdrop-filter:${theme.ideBlur ? `blur(${theme.ideBlur}px)` : 'none'}; }
     .monaco-workbench .part.sidebar .composite, .monaco-workbench .part.sidebar .pane-composite-part > .content, .monaco-workbench .part.sidebar .split-view-view > .pane, .monaco-workbench .part.sidebar .pane-body, .monaco-workbench .part.sidebar .monaco-list, .monaco-workbench .part.sidebar .monaco-list-rows, .monaco-workbench .part.auxiliarybar .composite, .monaco-workbench .part.soloaisidebar .content { background-color:transparent!important; }
     .monaco-workbench .part.editor .title.tabs, .monaco-workbench .part.editor .tabs-container, .monaco-workbench .part.editor .editor-actions { background-color:${surface}!important; }
+    .monaco-workbench .messageInputContainer { background-color:${surface}!important; border-radius:${theme.radius}px!important; }
     .monaco-workbench .part.titlebar, .monaco-workbench .part.statusbar, .monaco-workbench .part.activitybar { background-color:transparent!important; }
     .monaco-workbench .monaco-editor .minimap canvas { opacity:.6; }
     `;

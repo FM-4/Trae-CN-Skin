@@ -9,7 +9,8 @@ export const defaults = Object.freeze({
   surfaceOpacity: 68, blur: 12, radius: 14,
   accent: '#c8d7df', text: '#eceff1', muted: '#a5aab2', background: '#141518', surface: '#23252a'
 });
-const ranges = { focusX: [0,100], focusY: [0,100], imageWidth: [30,100], intensity: [0,100], taskIntensity: [0,100], surfaceOpacity: [0,100], blur: [0,40], radius: [0,24] };
+const ideFallback = { ideSurfaceOpacity: 'surfaceOpacity', ideBlur: 'blur' };
+const ranges = { focusX: [0,100], focusY: [0,100], imageWidth: [30,100], intensity: [0,100], taskIntensity: [0,100], surfaceOpacity: [0,100], blur: [0,40], radius: [0,24], ideSurfaceOpacity: [0,100], ideBlur: [0,40] };
 const imageTypes = { '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg', '.png': 'image/png', '.webp': 'image/webp' };
 const MAX_IMAGE = 8 * 1024 * 1024;
 const ID = /^[A-Za-z0-9][A-Za-z0-9-]{0,47}$/;
@@ -21,6 +22,8 @@ export function validateTheme(input, id) {
   if (!ID.test(id)) throw new Error('Skin IDs may contain letters, digits and hyphens, and must not start with a hyphen');
   const result = { id };
   for (const key of Object.keys(defaults)) result[key] = input[key] ?? defaults[key];
+  // IDE panes default to the shared values, so skins without these fields look the same as before.
+  for (const [key, base] of Object.entries(ideFallback)) result[key] = input[key] ?? result[base];
   if (typeof result.name !== 'string' || !result.name.trim() || result.name.length > 40) throw new Error('name must be 1-40 characters');
   if (!['dark','light'].includes(result.mode)) throw new Error('mode must be dark or light');
   if (typeof result.image !== 'string' || path.basename(result.image) !== result.image || !imageTypes[path.extname(result.image).toLowerCase()]) throw new Error('image must be a jpg/png/webp file name inside the skin folder');
