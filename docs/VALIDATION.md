@@ -1,34 +1,29 @@
-# 本阶段审阅与后续验收
+# Validation record
 
-当前目标为本机 TRAE CN（`Trae CN.exe`），注入范围为 Agent 工作台 `solo-lite.html`；IDE 编辑器窗口不注入。
+Target: local TRAE CN 1.107.1 (Electron 39.2.7 / Chrome 142), `D:\SoftWare\Trae CN\Trae CN.exe`, Agent workbench `solo-lite.html`.
 
-本轮依据 TRAE CN 安装目录与官方文档调整代码和示意布局。没有启动 Electron、安装依赖、注入 TRAE CN 或执行测试，运行兼容性仍待本机验收。
+## Done (2026-10-10, live via CDP)
 
-## 源码层面的交付对应
+- [x] Located the levels where TRAE actually declares its tokens; with the dark skin the home page has no light blocks and no text below 3:1 contrast (`node skin.mjs check`).
+- [x] Skin follows TRAE light/dark: TRAE dark → SUBARU-Dark, light → SUBARU-Light, swapped within one watcher cycle; TRAE `settings.json` untouched throughout.
+- [x] With no skin for the current mode (light skin temporarily moved away, then switched to light), the injection is removed and the watcher keeps running; switching back to dark re-injects the dark skin.
+- [x] Tooltips and the UID label (inverted by design) are no longer blanked by forced light text (confirmed by user).
+- [x] Main panel rounded border and top-right buttons are back to native (confirmed by user).
+- [x] When two Controllers apply one after the other, the earlier one stops watching.
+- [x] Edits to `theme.json` and `inject.js` take effect on the next apply without restarting.
+- [x] start.bat connects to a TRAE already running with the port, injects, and exits after 7 seconds; the watcher has no window and re-injects after a page reload.
+- [x] stop.bat stops the watcher, removes the injection, and exits after 4 seconds.
+- [x] TRAE path comes from the uninstall registry entry; `skin.mjs` also finds it when run directly.
+- [x] .ps1 files parse without errors in Windows PowerShell 5.1 (UTF-8 BOM).
+- [x] All code messages and tracked docs are in English; CLI, scripts and watcher log output verified.
 
-| 要求 | 实现证据 | 当前结论 |
-| --- | --- | --- |
-| 参考图对应主题 | assets/snow-ink.jpg、shared/theme.js、renderer/styles.css | 原图已复制；三套配色与构图参数已编写 |
-| 桌面应用 | main/main.js、main/preload.cjs、renderer/ | 窗口、托盘、页面与操作代码已编写 |
-| 完善框架 | main/controller.js、cdp.js、store.js、runtime/ | 分层、校验、状态、回退、还原代码已编写 |
-| 不打包 | package.json 无打包脚本 | 本轮未执行打包 |
-| 不本地测试 | 本轮只做文件写入、复制及源码阅读 | 本轮未执行测试或启动 |
+## Pending
 
-此前的静态审阅已处理相同主题节点重建、MutationObserver 尾随防抖和逐窗口回退快照。本轮将客户端校验改为 `Trae CN.exe`，增加 TRAE `vscode-file:` 页面地址匹配，并把适配器和连接页面指向 Agent 工作台。以上修改尚未经过运行验证。
-
-## 获准后再执行的验收清单
-
-- [ ] 安装解析依赖、记录 lockfile；确认 Electron 的目标系统支持。
-- [ ] 打开管理器，确认所有模块、IPC、托盘和菜单正常。
-- [ ] 940 / 1240 / 大窗口下检查布局、滚动、键盘操作与预览裁切。
-- [ ] 自动发现 `Trae CN.exe`；检查调试参数是否被保留、端口是否仅 loopback。
-- [ ] 端口被占用、已有无调试 TRAE、多个窗口、启动超时都应明确失败。
-- [ ] 采集 TRAE CN Agent 工作台的无用户内容 DOM 结构；确认 adapter 的首页、主区、输入框与侧栏锚点。
-- [ ] Agent 首页、长任务、设置、菜单、弹窗、文件、Diff、终端分别检查明暗与文字可读性。
-- [ ] 中文输入法、发送、滚动、选取、复制、拖拽和窗口按钮不受影响。
-- [ ] 应用失败、图片加载失败、窗口关闭、断线与重连验证逐窗口回退。
-- [ ] 刷新或新建窗口可以补注入，恢复后不会再次自动加回。
-- [ ] 还原与退出后确认没有残留监听器、节点和错误的成功状态。
-- [ ] 核对配置损坏、原子写入失败、快速重复操作和应用/保存独立性。
-
-发布打包、自动启动、主题商城及分发授权属于后续独立阶段。
+- [ ] Readability of task chat, settings, and file / diff / terminal panels in both modes.
+- [ ] Chinese IME input, sending, scrolling, selection, copy and drag are unaffected.
+- [ ] Several Agent workbench windows injected at once.
+- [ ] start.bat launching TRAE when it is not running; start.bat's quit prompt when TRAE was launched normally.
+- [ ] Watcher exiting about 15 seconds after TRAE closes.
+- [ ] Double-clicking start.bat / stop.bat in File Explorer (so far verified via Start-Process).
+- [ ] Switching from TRAE's theme menu (so far simulated by rewriting settings.json); follow-system tracking Windows light/dark.
+- [ ] Light blocks and contrast for SUBARU-Light in light mode (`check`'s light-block detection only runs for dark skins). The latest check reported 2 low-contrast items: a markdown file link (2.87) and a `+6` diff count (2.50).

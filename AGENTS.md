@@ -2,35 +2,35 @@
 
 ## Project Structure & Module Organization
 
-This Windows Electron application manages Snow Ink themes for the TRAE CN Agent workbench.
+Injects local themes into the TRAE CN Agent workbench over loopback CDP. Users double-click `start.bat` / `stop.bat`; there is no GUI and no npm dependency.
 
-- `src/main/`: Electron lifecycle, restricted preload bridge, configuration storage, executable discovery, CDP transport, and application controller.
-- `src/shared/theme.js`: theme defaults, presets, and validation.
-- `src/runtime/`: TRAE selector adapter and serialized theme injection.
-- `src/renderer/`: management UI and illustrative previews, using plain HTML, CSS, and JavaScript.
-- `assets/snow-ink.jpg`: original reference image; preserve its pixels.
-- `docs/`: architecture, validation checklist, and source attribution.
+- `start.bat`, `stop.bat`: ASCII-only wrappers that run `scripts/*.ps1` with `-ExecutionPolicy Bypass`; they close on success and pause on failure. Keep all file names ASCII.
+- `scripts/`: Windows PowerShell 5.1 scripts (saved as UTF-8 with BOM) that locate TRAE via its uninstall registry key, launch it with the debug port, and manage the watcher PID.
+- `themes/<id>/`: `theme.json` plus background image; the reference image's pixels must be preserved.
+- `src/core/`: dependency-free core: theme loading/validation, CDP transport, controller, adapter, and serialized injection (`inject.js`).
+- `skin.mjs`: CLI (`watch`, `apply`, `restore`, `check`, `list`) called by the scripts.
+- `docs/`: architecture, theming guide (`THEMING.md`), validation record, and source attribution.
 
-Keep `.research/` and `node_modules/` out of contributions. No test directory currently exists.
+Keep `.research/` out of contributions. No test directory currently exists.
 
 ## Build, Test, and Development Commands
 
-Run commands from the repository root in PowerShell when execution is authorized:
+Requires Node.js 22+ (built-in `fetch` and `WebSocket`); no install step. From the repository root:
 
-- `npm ci`: install dependencies from `package-lock.json`.
-- `npm start`: launch the Electron manager via `electron .`.
+- `start.bat [theme-id]` / `stop.bat`: start TRAE, inject, and leave a hidden watcher (log: `%APPDATA%\trae-work-skin\watcher.log`); or stop and restore.
+- `node skin.mjs apply <id>` / `restore` / `check`: inject, remove, and inspect the live page.
 
-There are no build, packaging, lint, or test scripts. The documented phase permits source edits and static review; obtain explicit authorization before dependency installation, application launch, runtime testing, TRAE injection, or packaging.
+There are no build, packaging, lint, or test scripts. Obtain authorization before injecting into or launching TRAE.
 
 ## Coding Style & Naming Conventions
 
-Use two-space indentation, semicolons, single-quoted JavaScript strings, camelCase functions/variables, and PascalCase classes. Follow surrounding formatting without unrelated rewrites. JavaScript uses ES modules; `preload.cjs` uses CommonJS. Use lowercase filenames and kebab-case CSS classes and theme IDs, such as `quiet-night`. No formatter or linter is configured.
+Use two-space indentation, semicolons, single-quoted JavaScript strings, camelCase functions/variables, and PascalCase classes. Follow surrounding formatting without unrelated rewrites. JavaScript uses ES modules. PowerShell scripts must stay compatible with Windows PowerShell 5.1 and keep their UTF-8 BOM; `.bat` files stay ASCII-only. Write code, comments, user-facing messages, and tracked docs in English. Use lowercase filenames and kebab-case CSS classes. Skin folder IDs use letters, digits, and hyphens, such as `SUBARU-Dark`. No formatter or linter is configured.
 
 Keep `installTheme` self-contained: it is serialized into another renderer and must have no external closure dependencies.
 
 ## Testing Guidelines
 
-No automated framework, test naming convention, or coverage threshold is established. Follow `docs/VALIDATION.md` for authorized manual checks: window sizing, IPC, target matching, multi-window rollback, reconnection, restoration, and save/apply independence. Record performed checks and pending runtime validation separately. The adapter's `full` status indicates key selector matches; visual acceptance requires inspection.
+No automated framework, test naming convention, or coverage threshold is established. Follow `docs/VALIDATION.md` and record performed checks and pending validation separately. Use `node skin.mjs check` for light blocks and low-contrast text on the visible page; the adapter's `full` status only indicates key selector matches. Fix colors through token mappings described in `docs/THEMING.md` rather than per-component selectors.
 
 ## Commit & Pull Request Guidelines
 
@@ -38,6 +38,6 @@ No prior commit history establishes a convention. Use concise imperative subject
 
 ## Security & Agent Instructions
 
-Preserve sandboxing, context isolation, fixed IPC methods, theme validation, loopback CDP, and installation-path filtering. Keep saved configuration separate from runtime application. Consult `docs/SOURCES.md` before reusing upstream code or distributing assets.
+Preserve theme validation, loopback CDP, installation-path filtering, and the rule that scripts never terminate TRAE. Never write TRAE's own settings: skins follow TRAE's light/dark mode (`html[data-theme]`) and each skin's `mode` decides where it applies. Consult `docs/SOURCES.md` before reusing upstream code or distributing assets.
 
 Chinese responses should directly state facts and actions, avoid invented rebuttals and preventive disclaimers, and end when complete.

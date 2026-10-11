@@ -1,43 +1,69 @@
-# 架构与实现边界
+# Architecture
 
-## 数据流
+## Components
 
-管理页面编辑 draft → shared 校验 → preload 的固定 IPC → 主进程再校验 → Controller → CDP → TRAE 页面。
+```text
+start.bat / stop.bat  double-click entry points; run scripts/*.ps1 with -ExecutionPolicy Bypass
+scripts/              find TRAE, launch TRAE, manage the watcher
+skin.mjs              CLI; the scripts call the core through it
+src/core/             injection core, no dependencies (Node 22+ built-in fetch / WebSocket)
+themes/<id>/          skin data (theme.json + image); each skin targets one light/dark mode
+```
 
-保存走 Store，不经过 CDP。应用走 Controller，不改保存配置。页面读取到的是业务结果 `{ok,value}` 或 `{ok:false,error}`，不提供文件读写、任意 shell 或任意 CDP 方法。
+Local state lives in `%APPDATA%\trae-work-skin\`: `config.json` holds the last skin ID given, `watcher.pid` the watcher's PID, and `watcher.log` the watcher's status log (state changes only).
 
-主题只有已定义的数值、十六进制颜色、模式和内置图片引用；未知字段丢弃。主题数据不会携带脚本或任意 URL。背景以本地图片 data URL 注入，不启动资源 HTTP 服务。
+## Start and stop
 
-## 连接生命周期
+start.ps1 locates `Trae CN.exe` from the uninstall registry entry written by the TRAE CN installer (`InstallLocation` under `HKCU\...\Uninstall\{98EB0EF0-...}_is1`), checks for Node 22+, then handles three cases:
 
-`idle → connecting → connected → applying → applied / partial`；连接丢失进入 `waiting`；异常进入 `error`；主动还原进入 `restored`。
+- TRAE not running: start it with `--remote-debugging-address=127.0.0.1 --remote-debugging-port=9341`.
+- TRAE running with the port open: use it.
+- TRAE running without the debug port: ask the user to fully quit it. The process is never terminated.
 
-默认端口 9341。仅接受 TRAE CN 的 `Trae CN.exe`，并在连接被拒绝时通过所选程序启动，传入 loopback 调试参数。只匹配所选安装目录里的 Agent 工作台 `solo/solo-lite.html` 页面；IDE 编辑器窗口不注入。CDP 可能返回 `file:` 或 TRAE 自定义 `vscode-file:` 页面 URL，匹配时统一校验路径前缀。已有服务但页面不匹配时停止；不会抢占端口或结束进程。文件路径和 renderer URL 联合过滤减少误注入，但不是密码学身份验证。生产化前需要验证目标 Electron 实际监听地址以及端口归属。
+It then waits up to 40 seconds for the `solo-lite.html` page and runs `skin.mjs apply` in the foreground, so success or failure shows in the window. Next it stops any old watcher, starts `skin.mjs watch` with `Start-Process -WindowStyle Hidden`, and exits. The bat waits 3 seconds and closes on success, or pauses on failure.
 
-每次用户应用前校验所有数据、定位窗口、读取本地图片。逐窗口记录原主题后应用。图片无法解码或运行时安装标记未确认即进入回退。每个窗口恢复自己的快照，而不是假设所有窗口之前一致。若回退无法确认，停止守护并报告；不得报告恢复成功。
+The watcher writes its PID to `watcher.pid` and state changes to `watcher.log`. It exits on its own when TRAE has been unreachable for 15 seconds (TRAE closed) or when a newer instance takes over the page.
 
-守护每三秒检查目标页面，串行执行，避免与用户操作重入。页面重载后重新注入；不注册永久的 `Page.addScriptToEvaluateOnNewDocument` 脚本，所以还原只需要停止守护与清除当前页面。其代价是页面刷新后可能短暂闪现原生外观，后续实机阶段再决定是否引入提前注入。
+stop.ps1 stops the watcher by PID (after checking the process is node), then runs `skin.mjs restore` to remove the injection. If TRAE is not running there is nothing to remove, and the script exits successfully.
 
-## 页面运行时
+All file names are ASCII, and .bat contents are ASCII only to avoid cmd code page issues. The .ps1 files keep a UTF-8 BOM so Windows PowerShell 5.1 reads any non-ASCII text correctly.
 
-`installTheme` 必须完全自包含，主进程将函数序列化发送给 renderer。禁止增加闭包依赖或 Electron API。
+## Skin data
 
-运行时拥有一个 style、一个不可交互背景层、一个 MutationObserver 和节流定时器。原有 `data-tws-part` / `data-tws-mode` 值先记录后覆盖，还原时恢复原值。样式随 style 节点删除一并撤销，不改原有内联样式或主题设置。相同 revision 幂等；style 或背景被移除时允许重建。
+`theme.js` reads `themes/<id>/theme.json` and the image from disk on every apply, so edits take effect on the next apply. Only known fields are kept, numbers are range-checked, and colors must be `#rrggbb`. These values are interpolated into CSS, so validation is the style input boundary. Images must be jpg/png/webp files inside the skin folder, up to 8MB, injected as data URLs. No local HTTP server runs, and no arbitrary URLs, CSS or JS are accepted. Field meanings are in [THEMING.md](THEMING.md).
 
-主区域与输入框同时命中时报告 `full`，只表示这两个关键部件存在，不表示全页面适配或视觉验收通过。其他情况报告 `basic`。首页锚点命中才提高图片强度；未知页面默认任务强度。
+## Hot reload
 
-适配器参考 TRAE CN 本机 Agent / SOLO 模块样式中的语义类名与上游选择器；尚未观察当前运行 DOM。后续可依据实际 DOM 扩充设置页、任务页、门户菜单、代码块等契约，避免通配所有后代或修改布局几何。当前不做第三方任意 Safe CSS 导入；结构化参数本身就是样式输入边界。
+`controller.js` re-imports `inject.js` and `adapter.js` with a timestamped URL on every apply. ESM caches by URL, so a single `skin.mjs apply` picks up the latest code. Running start.bat again replaces the watcher, so after editing `controller.js` or other core files, just run start.bat again. A standalone `skin.mjs apply` writes a newer owner, and the background watcher yields and exits.
 
-## 界面与素材
+## Connection lifecycle
 
-预览使用简化的桌面示意，不冒充 TRAE 截图。图片右置、局部遮罩、左侧低干扰；首页与任务分别配置强度。银笺用纸白与石墨，另外两套保持暗色。管理应用本身保持固定暗色以便对比预览。
+`idle → connecting → connected → applying → applied / partial`; a lost connection goes to `waiting`, failures to `error`, an explicit removal to `restored`.
 
-Electron renderer 开启 sandbox 与 contextIsolation，关闭 nodeIntegration。CSP 限制网络与脚本来源；阻止打开外部窗口和页面跳转；IPC 校验调用 WebContents 和主 frame。
+The default port is 9341 and only `Trae CN.exe` is accepted. Only `solo/solo-lite.html` pages (`file:` or `vscode-file:`) under that install folder are matched; IDE editor windows are not injected. If another service holds the port, the scripts report an error; they never take the port or kill processes. CDP addresses must be loopback with the matching port. Path and URL filtering reduce mistaken injection but are not authentication.
 
-## 扩展顺序
+## Following TRAE's light/dark mode
 
-1. 获准后解析依赖并生成 lockfile，先完成真实 DOM 与样式验收。
-2. 引入可追溯的版本 profile 和局部计算样式断言。
-3. 基于明确素材路径、大小、解码限制增加自选图片。
-4. 根据需要增加 ZIP manifest 与 Safe CSS 白名单；不直接导入 Codex 的 DOM 选择器。
-5. 最后再添加打包、签名、升级与分发配置。
+The skin never changes TRAE settings. The user picks the mode in TRAE's theme menu (dark / light / follow system). The skin reads the page's `html[data-theme]` (`dark` and `dark-blue` count as dark, `light` as light) and picks a skin with the matching `mode`:
+
+- A skin exists for the current mode: inject it. When several match, prefer the one last given in `config.json`, otherwise the first in folder order.
+- No skin for the current mode: remove the injection and keep watching; re-inject when TRAE switches back to a mode that has a skin.
+
+Switching happens at two levels:
+
+1. In the page: `installTheme` watches `data-theme` with a MutationObserver. On a mismatch it immediately sets the style to `disabled` and hides the background layer, so a wrong-mode skin never lingers. `inspect().enabled` reflects this.
+2. In the watcher: every 3 seconds it swaps in the matching skin or removes the injection.
+
+## Apply and watch
+
+Each apply locates the windows, then picks and injects a skin per window based on that window's own `data-theme`. Payloads are cached per skin ID inside the Controller; `apply` clears the cache, so running start.bat after editing skin files reads the new content. A background that fails to decode or an install marker that cannot be confirmed raises an error instead of reporting success.
+
+The watcher checks serially every 3 seconds and re-injects after page reloads. Each injection writes `window.__traeSnowInkOwner`, the Controller's creation time. If the watcher sees a newer owner on the page, another, later instance has taken over (e.g. a re-run of start.bat), so it stops instead of overwriting. No `Page.addScriptToEvaluateOnNewDocument` is registered; the trade-off is a brief flash of the native look after a page reload.
+
+## Page runtime
+
+Structure, token override levels and common pitfalls are in [THEMING.md](THEMING.md#injection-structure-read-before-editing-srccore). Key points: `installTheme` is self-contained and idempotent for the same revision, and it rebuilds the style or background layer if either is removed. Existing `data-tws-part` / `data-tws-mode` values are recorded before being overwritten and restored on removal.
+
+## Check
+
+`controller.check()` runs a read-only script in the page and returns the injected revision, skin ID, whether the skin is disabled due to a mode mismatch, match level, TRAE's light/dark mode, plus opaque light blocks in the viewport (dark skins only) and text below 3:1 contrast. It covers only what is visible; menus, tooltips and the like must be opened in TRAE first.
