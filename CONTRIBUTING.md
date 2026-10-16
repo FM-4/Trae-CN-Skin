@@ -8,8 +8,8 @@ Submit code, documentation and theme JSON configs under the project's [MIT Licen
 
 You can open an issue without submitting code:
 
-- [Bug report](https://github.com/The-time-forever/Trae-Work-Skin/issues/new?template=bug.md): describe the symptom, reproduction steps, expected/actual behavior and relevant environment. Logs and screenshots are optional.
-- [Feature request](https://github.com/The-time-forever/Trae-Work-Skin/issues/new?template=feature.md): describe the use case, proposed behavior and observable success criteria. Implementation details are optional.
+- [Bug report](https://github.com/The-time-forever/Trae-CN-Skin/issues/new?template=bug.md): describe the symptom, reproduction steps, expected/actual behavior and relevant environment. Logs and screenshots are optional.
+- [Feature request](https://github.com/The-time-forever/Trae-CN-Skin/issues/new?template=feature.md): describe the use case, proposed behavior and observable success criteria. Implementation details are optional.
 
 The templates live in `.github/ISSUE_TEMPLATE/`. Link the issue from a subsequent PR when applicable. Material submissions use the material PR template below.
 
@@ -19,10 +19,10 @@ After pushing your branch or fork, open a comparison using one of these links an
 
 | Change | Create PR | Template file |
 | --- | --- | --- |
-| Add or update material | [Material PR](https://github.com/The-time-forever/Trae-Work-Skin/compare?expand=1&template=material.md) | `.github/PULL_REQUEST_TEMPLATE/material.md` |
-| Fix an existing bug | [Bug-fix PR](https://github.com/The-time-forever/Trae-Work-Skin/compare?expand=1&template=bug.md) | `.github/PULL_REQUEST_TEMPLATE/bug.md` |
-| Add a feature | [Feature PR](https://github.com/The-time-forever/Trae-Work-Skin/compare?expand=1&template=feature.md) | `.github/PULL_REQUEST_TEMPLATE/feature.md` |
-| Documentation or maintenance | [General PR](https://github.com/The-time-forever/Trae-Work-Skin/compare?expand=1) | `.github/pull_request_template.md` |
+| Add or update material | [Material PR](https://github.com/The-time-forever/Trae-CN-Skin/compare?expand=1&template=material.md) | `.github/PULL_REQUEST_TEMPLATE/material.md` |
+| Fix an existing bug | [Bug-fix PR](https://github.com/The-time-forever/Trae-CN-Skin/compare?expand=1&template=bug.md) | `.github/PULL_REQUEST_TEMPLATE/bug.md` |
+| Add a feature | [Feature PR](https://github.com/The-time-forever/Trae-CN-Skin/compare?expand=1&template=feature.md) | `.github/PULL_REQUEST_TEMPLATE/feature.md` |
+| Documentation or maintenance | [General PR](https://github.com/The-time-forever/Trae-CN-Skin/compare?expand=1) | `.github/pull_request_template.md` |
 
 On an existing comparison URL, append `&template=material.md`, `&template=bug.md` or `&template=feature.md` (use `?template=...` if there is no query string). Templates become available once merged into the default branch. GitHub's supported locations and query parameter are documented in [Creating a pull request template](https://docs.github.com/en/communities/using-templates-to-encourage-useful-issues-and-pull-requests/creating-a-pull-request-template-for-your-repository).
 
