@@ -51,18 +51,8 @@ export class Controller {
     const session = await Session.open(target.webSocketDebuggerUrl,this.port);
     try { return await action(session); } finally { session.close(); }
   }
-  // One skin per TRAE mode: the preferred skin when it fits, otherwise the first valid skin made for that mode.
-  async pick(mode, preferred) {
-    const valid = [];
-    for (const { id, error } of await listThemes()) {
-      if (error) continue;
-      try { valid.push((await loadTheme(id, { image:false })).theme); } catch {}
-    }
-    if (!valid.length) throw new Error('No valid skins in themes/');
-    return valid.find(theme => theme.id === preferred && theme.mode === mode) ?? valid.find(theme => theme.mode === mode) ?? null;
-  }
-  async payload(id, surface) {
-    const { theme, bytes, dataUrl } = await loadTheme(id);
+  async payload(file, surface) {
+    const { theme, bytes, dataUrl } = await loadTheme(file);
     const { installTheme, adapters } = await runtime();
     const adapter = adapters[surface];
     if (!adapter) throw new Error(`No adapter for surface ${surface}`);
@@ -81,22 +71,24 @@ export class Controller {
     });
   }
   // Brings every workbench window in line with TRAE's current light/dark mode. Never touches TRAE settings.
-  async sync(list, preferred) {
+  async sync(list, themes) {
+    // Validate the entire active material before changing any window.
+    themes ??= await listThemes();
     const windows = [];
     for (const target of list) {
       const state = await this.withTarget(target,session => session.evaluate('({ mode:document.documentElement.getAttribute("data-theme"), skin:window.__traeSnowInkV1 ? { ...window.__traeSnowInkV1.inspect(), owner:window.__traeSnowInkOwner ?? 0 } : null })'));
       // A later instance (e.g. a re-run of start.bat with new code) owns this window; yield instead of reverting it.
       if (state.skin?.installed && state.skin.owner > this.owner) return { yielded:true };
       const mode = pageMode(state.mode);
-      const theme = mode ? await this.pick(mode, preferred) : null;
+      const theme = themes.find(item => item.mode === mode) ?? null;
       if (!theme) {
         if (state.skin) await this.remove(target);
         windows.push({ id:target.id, surface:target.surface, mode:state.mode, theme:null });
         continue;
       }
-      const key = `${theme.id}:${target.surface}`;
+      const key = `${theme.file}:${target.surface}`;
       let payload = this.payloads.get(key);
-      if (!payload) { payload = await this.payload(theme.id, target.surface); this.payloads.set(key, payload); }
+      if (!payload) { payload = await this.payload(theme.file, target.surface); this.payloads.set(key, payload); }
       const current = state.skin?.installed && state.skin.revision === payload.revision;
       windows.push({ ...(current ? { id:target.id, ...state.skin } : await this.inject(target,payload)), surface:target.surface, mode:state.mode, theme });
     }
@@ -109,17 +101,18 @@ export class Controller {
     const full = skinned.every(w => w.level === 'full');
     return { phase: full ? 'applied' : 'partial', message: full ? `Applied ${names}` : `Applied ${names}; some components did not match` };
   }
-  async apply(executable, preferred) {
+  async apply(executable) {
     return this.exclusive(async () => {
+      const themes = await listThemes();
       const list = await this.matching(executable);
       if (!list.length) throw new Error('No TRAE CN Agent or IDE window found; start TRAE CN first');
       clearInterval(this.timer); this.timer = null;
       // Theme files and injection code are re-read on every apply, so edits take effect immediately.
       this.payloads = new Map();
       this.report('applying','Applying the skin for the current TRAE CN light/dark mode...');
-      const result = await this.sync(list, preferred);
+      const result = await this.sync(list, themes);
       if (result.yielded) return this.report('idle','A newer instance has taken over TRAE CN');
-      this.active = { executable, preferred }; this.watch();
+      this.active = { executable }; this.watch();
       const { phase, message } = this.describe(result.windows);
       return this.report(phase, message, result.windows);
     });
@@ -132,7 +125,7 @@ export class Controller {
       try {
         const list = await this.matching(this.active.executable);
         if (!list.length) { this.report('waiting','Waiting for a TRAE CN window to reappear'); return; }
-        const result = await this.sync(list, this.active.preferred);
+        const result = await this.sync(list);
         if (result.yielded) {
           clearInterval(this.timer); this.timer = null; this.active = null;
           this.report('idle','A newer instance has taken over TRAE CN; this watcher stopped');
@@ -140,7 +133,7 @@ export class Controller {
         }
         const { phase, message } = this.describe(result.windows);
         this.report(phase, message, result.windows);
-      } catch { this.report('waiting','Connection unavailable; waiting to reconnect'); }
+      } catch (error) { this.report('waiting',`Could not synchronize: ${error.message}`); }
       finally { this.busy = false; }
     },3000);
   }

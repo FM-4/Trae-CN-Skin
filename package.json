@@ -1,6 +1,7 @@
 {
   "name": "trae-work-skin",
   "version": "0.3.0",
+  "license": "MIT",
   "private": true,
   "description": "Local skin injection for the TRAE CN Agent workbench",
   "type": "module",

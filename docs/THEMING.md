@@ -2,17 +2,29 @@
 
 For people making or editing skins, and for agents doing it on their behalf. After a change, run `node skin.mjs apply` and then `node skin.mjs check` to see whether the live page still has light blocks or low-contrast text.
 
-## Skin folder
+## Material library and active folder
 
 ```text
-themes/<id>/
-  theme.json
-  background.jpg   .png / .webp also work, up to 8MB; the file name goes in theme.json's image field
+materials/<name>/      material library, not read at runtime
+  background.jpg
+  dark.json
+  light.json
+
+themes/                active material, read directly
+  background.jpg
+  dark.json
+  light.json
 ```
 
-The folder name is the skin ID: letters, digits and hyphens, not starting with a hyphen, at most 48 characters, e.g. `SUBARU-Dark`. The command line matches it case-insensitively.
+One image and two configs form a complete material. Both configs reference the same image through `image`; each has its own colors, opacity and crop settings. PNG, JPEG and WebP images also work, up to 8 MiB per image. Keep image pixels unchanged and use the crop controls below.
 
-## theme.json fields
+Contribute materials under `materials/<name>/` with source and redistribution information described in [SOURCES.md](SOURCES.md). To use one, replace the old files in `themes/` with its image and configs, then run `start.bat`. Copy the contents, not the enclosing folder. The runtime scans only JSON files directly inside `themes/`; nested directories and `materials/` are ignored.
+
+Config file names are ASCII, start with a letter or digit, and may contain letters, digits, dots, underscores and hyphens before `.json` (case-insensitive). Image file names use the same characters and a supported image extension. `dark.json` and `light.json` are conventions: `mode` determines the mode regardless of file name. A config's file stem is the internal ID reported by `check`.
+
+Keep at most one config for each mode. One mode alone is supported; the missing mode keeps TRAE's native appearance. Empty active folders, invalid configs, duplicate modes, missing images and oversized images fail validation. `node skin.mjs list` runs this validation offline, and `start.bat` runs it before starting TRAE. Material names and previous choices are not stored.
+
+## JSON config fields
 
 Unknown fields are dropped. Out-of-range values are rejected, never silently corrected.
 
@@ -20,8 +32,8 @@ Unknown fields are dropped. Out-of-range values are rejected, never silently cor
 | --- | --- | --- |
 | `schemaVersion` | `1` | Format version |
 | `name` | 1–40 characters | Name shown in status messages and `skin.mjs list` |
-| `mode` | `dark` / `light` | Which TRAE light/dark mode this skin applies to; the colors must suit it. TRAE settings are never changed |
-| `image` | File name inside the skin folder | Background image |
+| `mode` | `dark` / `light`, required | Which TRAE light/dark mode this skin applies to; the colors must suit it. TRAE settings are never changed |
+| `image` | File name directly inside `themes/` | Background image; both configs can reference the same file |
 | `imageWidth` | 30–100 | Image width as a percentage of the window, anchored right with a fade on the left edge |
 | `focusX` / `focusY` | 0–100 | Crop focus, same as `background-position` percentages |
 | `intensity` | 0–100 | Image opacity on the home (new task) page |

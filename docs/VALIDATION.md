@@ -2,6 +2,37 @@
 
 Target: local TRAE CN 1.107.1 (Electron 39.2.7 / Chrome 142), `D:\SoftWare\Trae CN\Trae CN.exe`, Agent workbench `solo-lite.html` and IDE window `workbench.html` (IDE and SOLO layouts).
 
+## Active material layout (2026-10-16, offline)
+
+- [x] `node --test`: 11 regression checks passed using temporary material fixtures and in-memory controller sessions; no TRAE process or CDP connection was used.
+- [x] Covered one shared image, config names independent of mode, one-mode materials, ignored nested folders, duplicate modes, empty folders, required mode, invalid JSON/ranges/colors, UTF-8 BOM, unknown fields, missing/oversized images, and local image file restrictions.
+- [x] Verified that the CLI ignores a malformed old selection file without rewriting it, rejects old theme-ID arguments, and rejects duplicate modes before executable discovery or injection.
+- [x] Mock controller checks covered separate Agent/IDE modes, Deep Blue, mode changes, missing-mode removal, newer-owner handoff and clearing payloads on a new apply. These checks exercise control flow without rendering TRAE.
+- [x] `node skin.mjs list`: active `dark.json` and `light.json` both validate and reference `background.jpg`.
+- [x] All JavaScript files pass `node --check`; all PowerShell scripts parse in Windows PowerShell 5.1 and retain UTF-8 BOM; both BAT wrappers remain ASCII.
+- [x] Git blob hashes confirm that the active and library image copies and both JSON configs are byte-identical to the previous SUBARU files.
+
+### Pending for this change
+
+- [ ] Run start.bat with the flat active folder and confirm the foreground apply and hidden watcher.
+- [ ] Switch materials and rerun start.bat; confirm the replacement image and settings in Agent, IDE and SOLO layouts.
+- [ ] Switch TRAE light/dark with both configs present, then with only one config; confirm apply/removal and return to the supported mode.
+- [ ] Confirm stop.bat removal with the flat active folder.
+
+The live checks below describe the earlier per-directory layout and remain historical evidence.
+
+## Startup console fix (2026-10-16)
+
+The user-provided cold-start output contains a successful apply and watcher startup, followed by continued TRAE application logs in the same console. The startup command now redirects TRAE stdout/stderr to separate files, suppresses successful material-list output and exits explicitly on success.
+
+- [x] Windows PowerShell 5.1 stub checks: successful launch/exit, silent validation, separate log paths, visible validation errors and no watcher after failed apply. All 14 offline checks passed; no TRAE process or CDP connection was started.
+- [ ] Actual File Explorer cold start: startup window closes after success while TRAE stays open; application logs stay out of the startup console.
+
+## PR templates (2026-10-16, offline)
+
+- [x] Added material, bug-fix, feature and default PR templates, with selection instructions in CONTRIBUTING.md. Confirmed the documented material validation command against the bundled material and the template flag in local `gh pr create --help`.
+- [ ] Templates selected through GitHub after the template files reach the default branch. No PR was opened or published by these checks.
+
 ## Done (2026-10-10, live via CDP)
 
 - [x] Located the levels where TRAE actually declares its tokens; with the dark skin the home page has no light blocks and no text below 3:1 contrast (`node skin.mjs check`).

@@ -3,23 +3,23 @@
 import { promises as fs } from 'node:fs';
 import { Controller } from './src/core/controller.js';
 import { discover } from './src/core/discovery.js';
-import { listThemes, loadTheme } from './src/core/theme.js';
-import { readConfig, writeConfig, stateDir, watcherFile, watcherLog } from './src/core/config.js';
+import { listThemes } from './src/core/theme.js';
+import { stateDir, watcherFile, watcherLog } from './src/core/config.js';
 
-const usage = `Usage: node skin.mjs <command> [skin-id]
+const usage = `Usage: node skin.mjs <command>
 
-  apply [skin-id]  Inject once for TRAE's current light/dark mode (start.bat runs this first to show the result)
-  watch [skin-id]  Background watcher: follows TRAE's light/dark mode, re-injects after page reloads,
+  apply            Inject once for TRAE's current light/dark mode (start.bat runs this first to show the result)
+  watch            Background watcher: follows TRAE's light/dark mode, re-injects after page reloads,
                    exits once TRAE closes (start.bat starts it hidden)
   restore          Remove the injection (used by stop.bat)
   check            Inspect the live page: skin, revision, light/dark mode, light blocks, low-contrast text
-  list             List skins under themes/
+  list             Validate and list active JSON configs and their modes under themes/ (offline)
 
-Skins follow TRAE CN's own light/dark setting; TRAE settings are never modified. When several skins
-share a mode, the given skin ID wins (otherwise the last one given); with no skin for the current
-mode nothing is injected.`;
+Copy one material's image and JSON configs from materials/ into themes/, replacing the old files.
+Each config must declare mode: dark or light; keep at most one config per mode. Skins follow TRAE
+CN's own light/dark setting; with no config for the current mode nothing is injected.`;
 
-const [command, arg] = process.argv.slice(2);
+const [command, ...args] = process.argv.slice(2);
 const stamp = () => new Date().toLocaleTimeString();
 const print = status => console.log(`[${stamp()}] ${status.message}`);
 // The watcher runs hidden (started by start.ps1), so it logs to a file instead of a console.
@@ -31,25 +31,21 @@ const log = status => {
 };
 
 async function main() {
-  const config = await readConfig();
+  if (args.length) throw new Error('Commands do not accept skin IDs or extra arguments. Replace the active files in themes/');
   if (command === 'list') {
     for (const theme of await listThemes()) {
-      const mode = theme.error ? '' : (await loadTheme(theme.id, { image: false })).theme.mode;
-      console.log(`${theme.id === config.theme ? '*' : ' '} ${theme.id.padEnd(16)} ${mode.padEnd(5)} ${theme.name}${theme.error ? '  ! ' + theme.error : ''}`);
+      console.log(`${theme.file.padEnd(20)} ${theme.mode.padEnd(5)} ${theme.name}  image=${theme.image}`);
     }
     return;
   }
-  // Windows paths ignore case; normalise to the folder's own spelling so the saved ID matches what is injected.
-  const known = arg ? (await listThemes()).find(theme => theme.id.toLowerCase() === arg.toLowerCase() && !theme.error) : null;
-  if (arg && !known) throw new Error(`No valid skin named ${arg}; run node skin.mjs list`);
-  const chosen = known?.id;
   if (!['watch','apply','restore','check'].includes(command)) { console.log(usage); if (command && command !== 'help') process.exitCode = 1; return; }
+  if (command === 'apply' || command === 'watch') await listThemes();
   const executable = await discover();
   if (command === 'apply') {
     const controller = new Controller();
-    print(await controller.apply(executable, chosen || config.theme));
-    if (chosen) await writeConfig({ theme: chosen });
-    return controller.stop();
+    try { print(await controller.apply(executable)); }
+    finally { controller.stop(); }
+    return;
   }
   if (command === 'watch') {
     await fs.mkdir(stateDir, { recursive: true });
@@ -66,7 +62,7 @@ async function main() {
       if (status.phase === 'idle' && !controller.active) exit();
     });
     process.on('SIGINT', exit);
-    try { await controller.apply(executable, chosen || config.theme); }
+    try { await controller.apply(executable); }
     catch (error) { log({ phase: 'error', message: error.message }); throw error; }
     return;
   }
